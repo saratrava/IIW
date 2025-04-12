@@ -70,7 +70,7 @@ FUNZIONI IO
  * @param "i": flag che abilita perror, "string": stringa da stampare
  * @return void
  */
-void print_error(int i,char *string){
+void print_error(int i, char *string){
 
 	printf("\033[1;31m\n");
 
@@ -78,7 +78,7 @@ void print_error(int i,char *string){
 		perror(string);
 	}
 	else{
-		printf("%s\n",string);
+		printf("%s\n", string);
 	}
 
 	printf("\033[0m\n");
@@ -93,7 +93,7 @@ void print_success(char *string){
 
 	printf("\033[1;32m\n\n");
 
-	printf("%s",string);
+	printf("%s", string);
 
 	printf("\033[0m\n\n");
 }
@@ -188,8 +188,8 @@ void set_timeout(int socket, int sec, long usec){
 
 	tv.tv_usec = usec;
 
-	if(setsockopt(socket,SOL_SOCKET,SO_RCVTIMEO,(char *)&tv,sizeof(tv)) == -1){
-		print_error(1,"Error setting timeout");
+	if(setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) == -1){
+		print_error(1, "Error setting timeout");
 		fflush(stdout);
 		exit(-1);
 	}
@@ -207,33 +207,33 @@ int send_mess(int sd, struct sockaddr_in server, struct message *m){
 	char *line = malloc(20);
 	char *line2 = malloc(MAX);
 	char *lineT = malloc(MAX+20);
-	memset(line,0,20);
-	memset(line2,0,MAX);
-	memset(lineT,0,20+MAX);
+	memset(line, 0, 20);
+	memset(line2, 0, MAX);
+	memset(lineT, 0, 20+MAX);
 
 	if(prob(PROB)){
 		return 0;
 	}
 
 	if(m->cmd != NULL){
-		memcpy(line,m->cmd,20);
+		memcpy(line, m->cmd, 20);
 	}
-	else sprintf(line,"(null)");
+	else sprintf(line, "(null)");
 
 	if(m->mess != NULL){
-		memcpy(line2,m->mess,MAX);
+		memcpy(line2, m->mess, MAX);
 	}
 	else sprintf(line2,"(null)");
 
-	for (int i=0; i<20; i++){
+	for (int i = 0; i < 20; i++){
 		lineT[i] = line[i];
 	}
 
-	for (int i=0; i<MAX; i++){
+	for (int i = 0; i < MAX; i++){
 		lineT[20+i] = line2[i];
 	}
 
-	if(sendto(sd,lineT,20+MAX,0,(struct sockaddr *)&server,sizeof(server))<0){
+	if(sendto(sd, lineT, 20+MAX, 0, (struct sockaddr *)&server, sizeof(server)) < 0){
 		return -1;	//errore
 	}
 
@@ -252,24 +252,24 @@ int recv_mess(int sd, struct sockaddr_in *server, socklen_t size, struct message
 	int n;
 	char line[MAX+20];
 
-	memset(m,0,sizeof(m));
+	memset(m, 0, sizeof(m));
 
-	set_timeout(sd,sec,usec);		//timeout
+	set_timeout(sd, sec, usec);		//timeout
 
-	if((n = recvfrom(sd,line,MAX+20,0,(struct sockaddr *)server,&size))< 0){
+	if((n = recvfrom(sd, line, MAX+20, 0, (struct sockaddr *)server, &size)) < 0){
 		return -1;	//errore
 	}
 
 	if(line != NULL){
 	
-		m->cmd=malloc(20);
-		m->mess=malloc(MAX);
+		m->cmd = malloc(20);
+		m->mess = malloc(MAX);
 
-		for (int i=0; i<20; i++){
-			m->cmd[i]=line[i];
+		for (int i = 0; i < 20; i++){
+			m->cmd[i] = line[i];
 		} 
-		for (int i=0; i<MAX; i++){
-			m->mess[i]=line[i+20];
+		for (int i = 0; i < MAX; i++){
+			m->mess[i] = line[i+20];
 		}
 	}
 
@@ -297,8 +297,8 @@ int find_port(int sd, struct sockaddr_in client, int start, int maxcon){
 	client.sin_family = AF_INET;
 	client.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	for(int i=0;i<maxcon;i++){
-		count=(count+1)%(maxcon+1);
+	for(int i = 0;i < maxcon; i++){
+		count = (count+1)%(maxcon+1);
 		new_port = start + count;
 
 		client.sin_port = htons(new_port);		//numero di porta della connessione	 
@@ -329,17 +329,17 @@ int connect_client(int default_port, char *server_ip, conn_arg *ca){
 
 	count = 0;
 
-	if((sd = socket(AF_INET,SOCK_DGRAM,0))<0){
+	if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
 		print_error(1,"Error connecting to the server (3)");
 		return -1;
 	}
 
-	memset((void *)&server,0,sizeof(server));
+	memset((void *)&server, 0, sizeof(server));
 	server.sin_family = AF_INET;
 	server.sin_port = htons(default_port);
 
-	if(inet_pton(AF_INET,server_ip,&server.sin_addr)<=0){
-		print_error(1,"Error connecting to the server (4)");
+	if(inet_pton(AF_INET, server_ip, &server.sin_addr) <= 0){
+		print_error(1, "Error connecting to the server (4)");
 		return -1;
 	}
 
@@ -350,32 +350,32 @@ reconnect:
 	m.mess = NULL;
 
 	if(count >= 5){
-		print_error(0,"Error connecting to server: Service temporarily unavailable");
+		print_error(0, "Error connecting to server: Service temporarily unavailable");
 		close(sd);
 		return -1;
 	}
 
-	if(send_mess(sd,server,&m) == -1){
+	if(send_mess(sd, server, &m) == -1){
 		close(sd);
 		return -1;
 	}
 
-	if(recv_mess(sd,&server,sizeof(server),&m,1,0) == -1){
+	if(recv_mess(sd, &server, sizeof(server), &m, 1, 0) == -1){
 		count++;
 		goto reconnect;
 	}
 
-	if(strncmp(m.cmd,"err",3) == 0){
-		print_error(0,m.mess);			//viene stampato l'errore inviato dal server
+	if(strncmp(m.cmd, "err", 3) == 0){
+		print_error(0, m.mess);			//viene stampato l'errore inviato dal server
 		close(sd);
 		return -1;
 	}	
 
 	//estrazione dei parametri per la connessione
-	ca->port = strtol(strtok(m.mess," "),NULL,10);
-	ca->window = strtol(strtok(NULL," "),NULL,10);
-	ca->timeout = strtol(strtok(NULL," "),NULL,10);
-	ca->adapt = strtol(strtok(NULL," "),NULL,10);
+	ca->port = strtol(strtok(m.mess," "), NULL, 10);
+	ca->window = strtol(strtok(NULL," "), NULL, 10);
+	ca->timeout = strtol(strtok(NULL," "), NULL, 10);
+	ca->adapt = strtol(strtok(NULL," "), NULL, 10);
 
 	close(sd);
 	return 0;
@@ -392,10 +392,10 @@ int connect_server(int sd, struct sockaddr_in client, conn_arg ca){
 	m.cmd = malloc(20);
 	m.mess = malloc(MAX);
 
-	sprintf(m.cmd,"conn");
-	sprintf(m.mess,"%d %d %d %d",ca.port,ca.window,ca.timeout,ca.adapt);
+	sprintf(m.cmd, "conn");
+	sprintf(m.mess, "%d %d %d %d", ca.port, ca.window, ca.timeout, ca.adapt);
 
-	if(send_mess(sd,client,&m) == -1){
+	if(send_mess(sd, client, &m) == -1){
 		return -1;
 	}
 
@@ -417,7 +417,7 @@ void quit_conn(int sd, struct sockaddr_in server){
 	m.cmd = "quit";
 	m.mess = NULL;
 
-	send_mess(sd,server,&m);
+	send_mess(sd, server, &m);
 }
 
 
@@ -1425,10 +1425,10 @@ int putFunc(int sd, struct sockaddr_in client, char *file, int N){
 	int n,fd;
 	message m;
 
-	m.mess=malloc(MAX);
-	m.cmd=malloc(20);
-	memset(m.cmd,0,20);
-	memset(m.mess,0,MAX);
+	m.mess = malloc(MAX);
+	m.cmd = malloc(20);
+	memset(m.cmd, 0, 20);
+	memset(m.mess, 0, MAX);
 	
 #ifdef debug
 
@@ -1457,15 +1457,15 @@ open:
 	close(fd);
 #endif
 
-	sprintf(m.mess,"ok");
-	sprintf(m.cmd,"put");
+	sprintf(m.mess, "ok");
+	sprintf(m.cmd, "put");
 
-	send_mess(sd,client,&m);
+	send_mess(sd, client, &m);
 
-	f=fopen(file,"wb");
+	f = fopen(file,"wb");
 
 	
-	if(download_file(sd,client,f,N) == -1){
+	if(download_file(sd, client, f, N) == -1){
 		fclose(f);
 		return -1;
 	}
@@ -1488,17 +1488,17 @@ int list_files(int sd, struct sockaddr_in server, int N, int timeout){
 	int listRN = 0;
 
 retryList:
-	m->cmd=malloc(20);
+	m->cmd = malloc(20);
 
-	memset(m->cmd,0,20);
-	sprintf(m->cmd,"list");
+	memset(m->cmd, 0, 20);
+	sprintf(m->cmd, "list");
 	m->mess = NULL;
 
-	send_mess(sd,server,m);
+	send_mess(sd, server, m);
 
 	free(m->cmd);
 
-	if(recv_mess(sd,&server,sizeof(server),m,0,5*timeout) == -1){
+	if(recv_mess(sd, &server, sizeof(server), m, 0, 5*timeout) == -1){
 		listRN++;
 		goto retryList;
 	}
@@ -1507,7 +1507,7 @@ retryList:
 
 	printf("\n\033[1m----- Server File list -----\033[0m\n\n");
 
-	if(download_file(sd,server,stdout,N) != -1){
+	if(download_file(sd, server, stdout, N) != -1){
 		printf("\n\033[1m----------------------------\033[0m\n\n");
 		free(m);
 		return 0;

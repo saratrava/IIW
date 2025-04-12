@@ -11,7 +11,7 @@
 //---------------------------------------------------------------------------------------------------------------
 #define IP "127.0.0.1"			//Ip server
 #define DEFAULT 50000			//Porta di default del server
-#define PATH "client/files/"	//Path della cartella dove si vogliono salvare i file
+#define PATH "client_src/files/"	//Path della cartella dove si vogliono salvare i file
 //---------------------------------------------------------------------------------------------------------------
 
 int sd;
@@ -33,26 +33,26 @@ int main(int argc, char *argv[]){
 
 	int n;
 	char input[300];
-	memset(&input,0,300);
+	memset(&input, 0, 300);
 	char *cmd;
 	char *par;
 	conn_arg ca;
 
-	if((sd = socket(AF_INET,SOCK_DGRAM,0))<0){
+	if((sd = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		print_error(1,"Error connecting to server (1)");
 		return -1;
 	}
 
-	memset((void *)&server,0,sizeof(server));
+	memset((void *)&server, 0, sizeof(server));
 	server.sin_family = AF_INET;
 
-	if(inet_pton(AF_INET,IP,&server.sin_addr)<=0){
-		print_error(1,"Error connecting to server (2)");
+	if(inet_pton(AF_INET,IP,&server.sin_addr) <= 0){
+		print_error(1, "Error connecting to server (2)");
 		close(sd);
 		return -1;
 	}
 
-	if(connect_client(DEFAULT,IP,&ca) == -1){	//Contatta il server per ricevere i parametri di connessione
+	if(connect_client(DEFAULT, IP, &ca) == -1){	//Contatta il server per ricevere i parametri di connessione
 		close(sd);
 		return -1;
 	}
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]){
 	server.sin_port = htons(ca.port);
 
 	signal(SIGINT,signal_handler);
-	signal(SIGALRM,signal_handler);
+	signal(SIGALRM, signal_handler);
 
 	system("clear");
 	say_hello();
@@ -76,7 +76,7 @@ retry:
 		if(n <= 0){
 			if(n == EOF){
 				print_error(1,"Error reading input");
-				quit_conn(sd,server);
+				quit_conn(sd, server);
 				close(sd);
 				return -1;
 			}
@@ -93,21 +93,21 @@ retry:
 				print_error(0,"Wrong command: use get <file_name>");
 				continue;
 			}
-			get_file(sd,server,par,PATH,ca.window, ca.timeout);
+			get_file(sd, server, par, PATH, ca.window, ca.timeout);
 		}
 		else if(strcmp(cmd,"put") == 0){
 			par = strtok(NULL," ");
 			if(par == NULL){
-				print_error(0,"Wrong command: use put <file_name>");
+				print_error(0, "Wrong command: use put <file_name>");
 				continue;
 			}
-			put_file(sd,server,par,PATH,ca.window,ca.timeout,ca.adapt);
+			put_file(sd, server, par, PATH, ca.window, ca.timeout, ca.adapt);
 		}
 		else if(strcmp(cmd,"list") == 0){
-			list_files(sd,server,ca.window,ca.timeout);
+			list_files(sd, server, ca.window, ca.timeout);
 		}
 		else if(strcmp(cmd,"q") == 0){
-			quit_conn(sd,server);	//segnala al server che si intende chiudere la comunicazione
+			quit_conn(sd, server);	//segnala al server che si intende chiudere la comunicazione
 			close(sd);
 			break;
 		}
@@ -128,7 +128,7 @@ retry:
 					continue;
 				}				
 
-				file_transfer_debug(ca,sd,server,par,PATH);
+				file_transfer_debug(ca, sd, server, par, PATH);
 			#else
 				print_error(0,"Command not found");
 			#endif

@@ -342,7 +342,7 @@ int syn_handshake_server(int sd, struct sockaddr_in *client) {
         free(m.mess);
         return -1;
     }
-    printf("Server: ricevuto SYN: '%s'\n", m.cmd);)
+    printf("Server: ricevuto SYN: '%s'\n", m.cmd);
     
     // Preparazione del SYN-ACK
     char params[MAX];

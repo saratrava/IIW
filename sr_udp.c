@@ -283,6 +283,7 @@ int syn_handshake_client(int sd, struct sockaddr_in server) {
         print_error(1, "Error receiving SYN-ACK");
         return -1;
     }
+    printf("Client: ricevuto SYN-ACK: cmd='%s', mess='%s'\n", m.cmd, m.mess);
     if(strncmp(m.cmd, "SYN-ACK", 7) != 0) {
         print_error(0, "Handshake error: Expected SYN-ACK");
         return -1;
@@ -341,6 +342,7 @@ int syn_handshake_server(int sd, struct sockaddr_in *client) {
         free(m.mess);
         return -1;
     }
+    printf("Server: ricevuto SYN: '%s'\n", m.cmd);)
     
     // Preparazione del SYN-ACK
     char params[MAX];
@@ -365,6 +367,7 @@ int syn_handshake_server(int sd, struct sockaddr_in *client) {
         free(m.mess);
         return -1;
     }
+    printf("Server: inviato SYN-ACK con parametri: %s\n", params);
     
     // Attende ACK dal client
     free(m.cmd);

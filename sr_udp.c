@@ -850,7 +850,7 @@ redo:
                 if(gettimeofday(tv, NULL) == -1){
                     print_error(1, "Error getting time");
                 }
-                t = (tv->tv_sec) * 1000000 + tv.tv_usec;
+                t = (tv->tv_sec) * 1000000 + tv->tv_usec;
                 t = t - time[n % N];
                 timeout = get_timeout(&atm, t);
                 if (timeout < 3000) timeout = 3000;
@@ -966,6 +966,286 @@ redo2:
                 return -1;
             }
             c++;
+        }
+    }
+}
+
+/*
+ * @brief Invia al client la lista dei file disponibili sul server.
+ * @param sd Descrittore del socket.
+ * @param client Indirizzo del destinatario.
+ * @param N Dimensione della finestra di trasmissione.
+ * @param start_timeout Timeout iniziale.
+ * @param adapt Flag per l’utilizzo del timeout adattivo.
+ * @param path Percorso della directory contenente i file.
+ * @return Ritorna 0 se la lista viene inviata correttamente, -1 in caso di problemi.
+ */
+int listFunc(int sd, struct sockaddr_in client, int N, int start_timeout, int adapt, char *path) {
+    DIR *d;
+    struct dirent *dir;
+    pthread_t window[N];
+    long time[N];
+    int send_base, next_seq, i, n, end_num, count;
+    message *m;
+    message rm;
+    struct thread_arg *arg;
+    char *line;
+    struct timeval *tv;
+    int lRes;
+    long t, timeout;
+    adaptive_tm atm;
+    
+    timeout = start_timeout;
+    if((tv = (struct timeval *)malloc(sizeof(struct timeval))) == NULL) {
+        print_error(1, "Error in malloc of timeval");
+        return -1;
+    }
+    tv->tv_usec = 0;
+    tv->tv_sec = 0;
+    
+    if(adapt == 1){
+        atm.est_rtt = start_timeout;
+        atm.dev_rtt = 0;
+    }
+    if((d = opendir(path)) == NULL){
+        print_error(1, "Error opening directory");
+        return -1;
+    }
+    send_base = 0;
+    end_num = -1; // Valore dell'ack dell'ultimo pacchetto
+    count = 0;
+    for(i = 0; i < N; i++){
+        window[i] = 1;
+        time[i] = 0; 
+    }
+    for(next_seq = 0; next_seq < send_base + N; next_seq++){
+        if(end_num != -1) break;
+        arg = malloc(sizeof(struct thread_arg));
+        m = malloc(sizeof(struct message));
+redo:
+        if((dir = readdir(d)) != NULL ){
+            if(dir->d_type == DT_REG){ // Considera solo file regolari, esclude le directory
+                line = (char *)malloc(MAX);
+                memset(line, 0, MAX);
+                sprintf(line, "%s\n", dir->d_name);
+                m->mess = line;
+                lRes = strlen(m->mess) + 1;
+                line = (char *)malloc(MAX);
+                memset(line, 0, MAX);
+                sprintf(line, "%d=%d", next_seq, lRes);
+                m->cmd = line;
+                arg->sd = sd;
+                arg->addr = client;
+                arg->m = m;
+                arg->t = timeout;
+                arg->time = &time[next_seq % N];
+                window[next_seq % N] = 0;
+                if(pthread_create(&window[next_seq % N], NULL, thread_send, (void *)arg) != 0) {
+                    print_error(0, "Error creating thread");
+                    for(i = 0; i < N; i++){
+                        if(window[i] != 0 && window[i] != 1){
+                            pthread_detach(window[i]);
+                            pthread_cancel(window[i]);
+                        }
+                    }
+                    return -1;
+                }
+                if(gettimeofday(tv, NULL) == -1){
+                    print_error(1, "Error getting time");
+                }
+                time[next_seq % N] = (tv->tv_sec) * 1000000 + tv->tv_usec;
+            }
+            else {
+                goto redo;
+            }
+        }
+        else {
+            line = (char *)malloc(20);
+            memset(line, 0, 20);
+            sprintf(line, "done=20=%ld", timeout);
+            m->cmd = line;
+            line = (char *)malloc(MAX);
+            memset(line, 0, MAX);
+            sprintf(line, "%d", next_seq);
+            m->mess = line;
+            arg->sd = sd;
+            arg->addr = client;
+            arg->m = m;
+            arg->t = timeout;
+            arg->time = &time[next_seq % N];
+            window[next_seq % N] = 0;
+            if(pthread_create(&window[next_seq % N], NULL, thread_send, (void *)arg) != 0) {
+                print_error(0, "Error creating thread");
+                for(i = 0; i < N; i++){
+                    if(window[i] != 0 && window[i] != 1){
+                        pthread_detach(window[i]);
+                        pthread_cancel(window[i]);
+                    }
+                }
+                return -1;
+            }
+            if(gettimeofday(tv, NULL) == -1){
+                print_error(1, "Error getting time");
+            }
+            time[next_seq % N] = (tv->tv_sec) * 1000000 + tv->tv_usec;
+            closedir(d);
+            end_num = next_seq;
+            break;
+        }
+    }
+    while(1){    
+        if(recv_mess(sd, &client, sizeof(client), &rm, 0, 500 * timeout) == -1){
+            for(i = 0; i < N; i++){
+                if(window[i] != 0 && window[i] != 1){
+                    pthread_detach(window[i]);
+                    pthread_cancel(window[i]);
+                }
+            }
+            free(tv);
+            return -1;
+        }
+        if(strncmp(rm.cmd, "done", 4) == 0){
+            // Il lato opposto ha terminato il download
+            for(i = 0; i < N; i++){
+                if(window[i] != 0 && window[i] != 1){
+                    pthread_detach(window[i]);
+                    pthread_cancel(window[i]);
+                }
+            }
+            while(1){
+                memset(rm.cmd, 0, 20);
+                strcpy(rm.cmd, "close=20");
+                rm.mess = NULL;
+                send_mess(sd, client, &rm);
+                free(rm.cmd);
+                if(recv_mess(sd, &client, sizeof(client), &rm, 0, 5 * timeout) == -1){
+                    break;
+                }
+                if(strncmp(rm.cmd, "done", 4) == 0){
+                    continue;
+                }
+                else {
+                    free(rm.cmd);
+                    free(rm.mess);
+                    break;
+                }
+            }
+            return 0;
+        }
+        else if(strncmp(rm.cmd, "ack", 3) == 0){
+            n = strtol(rm.mess, NULL, 10);  // Numero dell'ack
+            if(adapt == 1){
+                if(gettimeofday(tv, NULL) == -1){
+                    print_error(1, "Error getting time");
+                }
+                t = (tv->tv_sec) * 1000000 + tv->tv_usec;
+                t = t - time[n % N];
+                timeout = get_timeout(&atm, t);
+            }
+            if(send_base < n && n < send_base + N){
+                // L'ack è nella finestra
+                pthread_detach(window[n % N]);
+                pthread_cancel(window[n % N]);
+                window[n % N] = 0;
+            }
+            else if(send_base == n){
+                // Sposta la finestra
+                pthread_detach(window[send_base % N]);
+                pthread_cancel(window[send_base % N]);
+                window[send_base % N] = 0;
+                i = 0;
+                while(window[send_base % N] == 0 && i < N){
+                    send_base++;
+                    i++;
+                }
+                for(next_seq; next_seq < send_base + N; next_seq++){
+redo2:
+                    if((dir = readdir(d)) != NULL ){
+                        if(dir->d_type == DT_REG){
+                            arg = malloc(sizeof(struct thread_arg));
+                            m = malloc(sizeof(struct message));
+                            line = (char *)malloc(MAX);
+                            memset(line, 0, MAX);
+                            sprintf(line, "%s\n", dir->d_name);
+                            m->mess = line;
+                            lRes = strlen(m->mess) + 1;
+                            line = (char *)malloc(MAX);
+                            memset(line, 0, MAX);
+                            sprintf(line, "%d=%d", next_seq, lRes);
+                            m->cmd = line;
+                            arg->sd = sd;
+                            arg->addr = client;
+                            arg->m = m;
+                            arg->t = timeout;
+                            arg->time = &time[next_seq % N];
+                            window[next_seq % N] = 0;
+                            if(pthread_create(&window[next_seq % N], NULL, thread_send, (void *)arg) != 0){
+                                print_error(0, "Error creating thread");
+                                for(i = 0; i < N; i++){
+                                    if(window[i] != 0 && window[i] != 1){
+                                        pthread_detach(window[i]);
+                                        pthread_cancel(window[i]);
+                                    }
+                                }
+                                return -1;
+                            }
+                            if(gettimeofday(tv, NULL) == -1){
+                                print_error(1, "Error getting time");
+                            }
+                            time[next_seq % N] = (tv->tv_sec) * 1000000 + tv->tv_usec;
+                        }
+                        else{
+                            goto redo2;
+                        }
+                    }
+                    else{
+                        arg = malloc(sizeof(struct thread_arg));
+                        m = malloc(sizeof(struct message));
+                        line = (char *)malloc(20);
+                        sprintf(line, "done=20=%ld", timeout);
+                        m->cmd = line;
+                        line = (char *)malloc(MAX);
+                        memset(line, 0, MAX);      
+                        sprintf(line, "%d", next_seq);
+                        m->mess = line;
+                        arg->sd = sd;
+                        arg->addr = client;
+                        arg->m = m;
+                        arg->t = timeout;
+                        arg->time = &time[next_seq % N];
+                        window[next_seq % N] = 0;
+                        if(pthread_create(&window[next_seq % N], NULL, thread_send, (void *)arg) != 0){
+                            print_error(0, "Error creating thread");
+                            for(i = 0; i < N; i++){
+                                if(window[i] != 0 && window[i] != 1){
+                                    pthread_detach(window[i]);
+                                    pthread_cancel(window[i]);
+                                }
+                            }
+                            return -1;
+                        }
+                        if(gettimeofday(tv, NULL) == -1){
+                            print_error(1, "Error getting time");
+                        }
+                        time[next_seq % N] = (tv->tv_sec) * 1000000 + tv->tv_usec;
+                        closedir(d);
+                        end_num = next_seq;
+                        break;
+                    }
+                }
+            }
+        }
+        else{
+            if(count >= 3){
+                for(i = 0; i < N; i++){
+                    if(window[i] != 0 && window[i] != 1){
+                        pthread_detach(window[i]);
+                        pthread_cancel(window[i]);
+                    }
+                }
+                return -1;
+            }
+            count++;
         }
     }
 }

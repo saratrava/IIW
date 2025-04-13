@@ -279,7 +279,7 @@ int syn_handshake_client(int sd, struct sockaddr_in server) {
     }
     
     // Fase 2: Attende SYN-ACK
-    if(recv_mess(sd, &server, sizeof(server), &m, 1, 0) == -1) {
+    if(recv_mess(sd, &server, sizeof(server), &m, 2, 0) == -1) {
         print_error(1, "Error receiving SYN-ACK");
         return -1;
     }

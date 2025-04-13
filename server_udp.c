@@ -68,6 +68,18 @@ int main(int argc, char **argv){
 			continue;
 		}
 
+		if(strcmp(m.cmd, "SYN") == 0) {
+    			if (syn_handshake_server(sd, &client) == -1) {
+        			print_error(0, "3-way handshake failed");
+       	 			continue;
+    			}
+    			// Dopo handshake, aspetta il comando 'conn'
+    			if(recv_mess(sd, &client, sizeof(client), &m, 0, 0) == -1){
+        			print_error(1, "Error receiving connection request after handshake");
+        			continue;
+    			}
+		}
+
 		if(strcmp(m.cmd, "conn") == 0){
 
 			ca.window = N;

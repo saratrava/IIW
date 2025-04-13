@@ -313,43 +313,87 @@ int syn_handshake_client(int sd, struct sockaddr_in server) {
 int syn_handshake_server(int sd, struct sockaddr_in *client) {
     message m;
     socklen_t clilen = sizeof(*client);
-    // Fase 1: Attende SYN dal client
+    
+    // Allocazione dei buffer per ricevere i messaggi
+    m.cmd = malloc(20);
+    if(m.cmd == NULL) {
+        print_error(1, "Memory allocation error for m.cmd");
+        return -1;
+    }
+    m.mess = malloc(MAX);
+    if(m.mess == NULL) {
+        print_error(1, "Memory allocation error for m.mess");
+        free(m.cmd);
+        return -1;
+    }
+    
+    // Riceve il messaggio SYN dal client
     if(recvfrom(sd, m.cmd, 20, 0, (struct sockaddr *)client, &clilen) < 0) {
         print_error(1, "Error receiving SYN");
+        free(m.cmd);
+        free(m.mess);
         return -1;
     }
-    // Allocazione per leggere il messaggio completo
-    m.cmd = malloc(20);
-    m.mess = malloc(MAX);
-    if(recv_mess(sd, client, clilen, &m, 2, 0) == -1) {
-        print_error(1, "Error during handshake (SYN phase)");
-        return -1;
-    }
+    // Controlla il contenuto
     if(strncmp(m.cmd, "SYN", 3) != 0) {
         print_error(0, "Handshake error: Expected SYN");
+        free(m.cmd);
+        free(m.mess);
         return -1;
     }
     
-    // Fase 2: Risponde con SYN-ACK (qui si potrebbero includere parametri, ad esempio "PORT WINDOW TIMEOUT ADAPT")
+    // Preparazione del SYN-ACK
     char params[MAX];
-    snprintf(params, MAX, "%d %d %d %d", 8080, 5, 10000, 1);  // Esempio di parametri
-    m.cmd = "SYN-ACK";
-    m.mess = params;
+    snprintf(params, MAX, "%d %d %d %d", 8080, 5, 10000, 1);  
+    free(m.cmd); 
+    m.cmd = strdup("SYN-ACK");
+    if(m.cmd == NULL) {
+        print_error(1, "Memory allocation error for SYN-ACK cmd");
+        free(m.mess);
+        return -1;
+    }
+    m.mess = strdup(params);
+    if(m.mess == NULL) {
+        print_error(1, "Memory allocation error for SYN-ACK mess");
+        free(m.cmd);
+        return -1;
+    }
+    
     if(send_mess(sd, *client, &m) == -1) {
         print_error(1, "Error sending SYN-ACK");
+        free(m.cmd);
+        free(m.mess);
         return -1;
     }
     
-    // Fase 3: Attende ACK dal client
-    if(recv_mess(sd, client, clilen, &m, 2, 0) == -1) {
+    // Attende ACK dal client
+    free(m.cmd);
+    free(m.mess);
+    
+    m.cmd = malloc(20);
+    m.mess = malloc(MAX);
+    if(m.cmd == NULL || m.mess == NULL) {
+        print_error(1, "Memory allocation error in ACK phase");
+        free(m.cmd);
+        free(m.mess);
+        return -1;
+    }
+    
+    if(recvfrom(sd, m.cmd, 20, 0, (struct sockaddr *)client, &clilen) < 0) {
         print_error(1, "Error receiving ACK");
+        free(m.cmd);
+        free(m.mess);
         return -1;
     }
     if(strncmp(m.cmd, "ACK", 3) != 0) {
         print_error(0, "Handshake error: Expected ACK");
+        free(m.cmd);
+        free(m.mess);
         return -1;
     }
     
+    free(m.cmd);
+    free(m.mess);
     return 0;
 }
 

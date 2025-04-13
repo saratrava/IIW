@@ -279,7 +279,7 @@ int syn_handshake_client(int sd, struct sockaddr_in server) {
     }
     
     // Fase 2: Attende SYN-ACK
-    if(recv_mess(sd, &server, sizeof(server), &m, 2, 0) == -1) {
+    if(recv_mess(sd, &server, sizeof(server), &m, 5, 0) == -1) {
         print_error(1, "Error receiving SYN-ACK");
         return -1;
     }
@@ -456,18 +456,19 @@ int connect_client(int default_port, char *server_ip, conn_arg *ca) {
         return -1;
     }
     
-    // ESEMPIO DI 3-Way HANDSHAKE
+    /*// ESEMPIO DI 3-Way HANDSHAKE
     if(syn_handshake_client(sd, server) == -1) {
         print_error(0, "Error during 3-way handshake (client side)");
         close(sd);
         return -1;
     }
     
-    // Dopo il 3-way handshake, il client può procedere a inviare la richiesta di connessione
+    // Dopo il 3-way handshake, il client può procedere a inviare la richiesta di connessione*/
+
+reconnect:
     m.cmd = "conn";
     m.mess = NULL;
-    
-reconnect:
+
     if(count >= 5){
         print_error(0, "Error connecting to server: Service temporarily unavailable");
         close(sd);

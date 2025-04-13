@@ -15,8 +15,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#define MAX 4096        // Dimensione della PDU
-#define PROB 0.125      // Probabilità simulata di errore
+#define MAX 4096         // Dimensione della PDU
+#define PROB 0.125       // Probabilità simulata di errore
 
 // PARAMETRI PER IL TIMEOUT ADATTIVO ----------------------------------------------------------------------------
 #define ALPHA 0.125
@@ -40,8 +40,8 @@ typedef struct thread_arg {
     struct sockaddr_in addr;        // Indirizzo a cui inviare i messaggi
     struct message *m;              // Messaggio da inviare
     long t;                         // Timeout
-    long *time;                     // Indirizzo per il tempo iniziale
-} thread_arg; 
+    long *time;                     // Indirizzo del tempo iniziale
+} thread_arg;
 
 typedef struct adaptive_tm {
     long est_rtt;
@@ -102,9 +102,9 @@ ssize_t writen(FILE *f, const void *buf, size_t n) {
     while (nleft > 0) {
         c = ptr[i];
         int res = fputc(c, f);
-        // if (res == EOF) {
-        //     return -1;
-        // }
+        //if (res == EOF) {
+        //    return -1;
+        //}
         nleft--;
         i++;
     }
@@ -258,6 +258,102 @@ Connessione Client-Server
 */
 
 /*
+ * @brief Implementa un semplice 3-Way Handshake lato Client utilizzando UDP.
+ *
+ *        Fase 1: Il client invia un messaggio "SYN" al server per iniziare la connessione.
+ *        Fase 2: Il client attende una risposta "SYN-ACK" contenente eventuali parametri.
+ *        Fase 3: Il client invia un messaggio "ACK" per confermare la ricezione e completare il handshake.
+ *
+ * @param sd Descrittore del socket.
+ * @param server Struttura contenente l’indirizzo del server.
+ * @return Ritorna 0 se lo handshake va a buon fine, -1 in caso di errore.
+ */
+int syn_handshake_client(int sd, struct sockaddr_in server) {
+    message m;
+    // Fase 1: Invia SYN
+    m.cmd = "SYN";
+    m.mess = NULL;
+    if(send_mess(sd, server, &m) == -1) {
+        print_error(1, "Error sending SYN");
+        return -1;
+    }
+    
+    // Fase 2: Attende SYN-ACK
+    if(recv_mess(sd, &server, sizeof(server), &m, 2, 0) == -1) {
+        print_error(1, "Error receiving SYN-ACK");
+        return -1;
+    }
+    if(strncmp(m.cmd, "SYN-ACK", 7) != 0) {
+        print_error(0, "Handshake error: Expected SYN-ACK");
+        return -1;
+    }
+    
+    // Fase 3: Invia ACK
+    m.cmd = "ACK";
+    m.mess = NULL;
+    if(send_mess(sd, server, &m) == -1) {
+        print_error(1, "Error sending ACK");
+        return -1;
+    }
+    
+    return 0;
+}
+
+/*
+ * @brief Implementa un semplice 3-Way Handshake lato Server utilizzando UDP.
+ *
+ *        Fase 1: Il server attende un messaggio "SYN" dal client.
+ *        Fase 2: Il server risponde con un messaggio "SYN-ACK" che può contenere parametri di connessione.
+ *        Fase 3: Il server attende il messaggio "ACK" dal client per completare il handshake.
+ *
+ * @param sd Descrittore del socket.
+ * @param client Puntatore alla struttura che conterrà l'indirizzo del client.
+ * @return Ritorna 0 se lo handshake va a buon fine, -1 in caso di errore.
+ */
+int syn_handshake_server(int sd, struct sockaddr_in *client) {
+    message m;
+    socklen_t clilen = sizeof(*client);
+    // Fase 1: Attende SYN dal client
+    if(recvfrom(sd, m.cmd, 20, 0, (struct sockaddr *)client, &clilen) < 0) {
+        print_error(1, "Error receiving SYN");
+        return -1;
+    }
+    // Allocazione per leggere il messaggio completo
+    m.cmd = malloc(20);
+    m.mess = malloc(MAX);
+    if(recv_mess(sd, client, clilen, &m, 2, 0) == -1) {
+        print_error(1, "Error during handshake (SYN phase)");
+        return -1;
+    }
+    if(strncmp(m.cmd, "SYN", 3) != 0) {
+        print_error(0, "Handshake error: Expected SYN");
+        return -1;
+    }
+    
+    // Fase 2: Risponde con SYN-ACK (qui si potrebbero includere parametri, ad esempio "PORT WINDOW TIMEOUT ADAPT")
+    char params[MAX];
+    snprintf(params, MAX, "%d %d %d %d", 8080, 5, 10000, 1);  // Esempio di parametri
+    m.cmd = "SYN-ACK";
+    m.mess = params;
+    if(send_mess(sd, *client, &m) == -1) {
+        print_error(1, "Error sending SYN-ACK");
+        return -1;
+    }
+    
+    // Fase 3: Attende ACK dal client
+    if(recv_mess(sd, client, clilen, &m, 2, 0) == -1) {
+        print_error(1, "Error receiving ACK");
+        return -1;
+    }
+    if(strncmp(m.cmd, "ACK", 3) != 0) {
+        print_error(0, "Handshake error: Expected ACK");
+        return -1;
+    }
+    
+    return 0;
+}
+
+/*
  * @brief Cerca una porta disponibile a partire da quella di inizio specificata.
  * @param sd Descrittore del socket.
  * @param client Struttura dell’indirizzo locale da impostare.
@@ -313,11 +409,18 @@ int connect_client(int default_port, char *server_ip, conn_arg *ca) {
         return -1;
     }
     
-    // Invio della richiesta di connessione al server
-reconnect:
+    // ESEMPIO DI 3-Way HANDSHAKE
+    if(syn_handshake_client(sd, server) == -1) {
+        print_error(0, "Error during 3-way handshake (client side)");
+        close(sd);
+        return -1;
+    }
+    
+    // Dopo il 3-way handshake, il client può procedere a inviare la richiesta di connessione
     m.cmd = "conn";
     m.mess = NULL;
     
+reconnect:
     if(count >= 5){
         print_error(0, "Error connecting to server: Service temporarily unavailable");
         close(sd);
@@ -747,7 +850,7 @@ redo:
                 if(gettimeofday(tv, NULL) == -1){
                     print_error(1, "Error getting time");
                 }
-                t = (tv->tv_sec) * 1000000 + tv->tv_usec;
+                t = (tv->tv_sec) * 1000000 + tv.tv_usec;
                 t = t - time[n % N];
                 timeout = get_timeout(&atm, t);
                 if (timeout < 3000) timeout = 3000;
@@ -863,286 +966,6 @@ redo2:
                 return -1;
             }
             c++;
-        }
-    }
-}
-
-/*
- * @brief Invia al client la lista dei file disponibili sul server.
- * @param sd Descrittore del socket.
- * @param client Indirizzo del destinatario.
- * @param N Dimensione della finestra di trasmissione.
- * @param start_timeout Timeout iniziale.
- * @param adapt Flag per l’utilizzo del timeout adattivo.
- * @param path Percorso della directory contenente i file.
- * @return Ritorna 0 se la lista viene inviata correttamente, -1 in caso di problemi.
- */
-int listFunc(int sd, struct sockaddr_in client, int N, int start_timeout, int adapt, char *path) {
-    DIR *d;
-    struct dirent *dir;
-    pthread_t window[N];
-    long time[N];
-    int send_base, next_seq, i, n, end_num, count;
-    message *m;
-    message rm;
-    struct thread_arg *arg;
-    char *line;
-    struct timeval *tv;
-    int lRes;
-    long t, timeout;
-    adaptive_tm atm;
-    
-    timeout = start_timeout;
-    if((tv = (struct timeval *)malloc(sizeof(struct timeval))) == NULL) {
-        print_error(1, "Error in malloc of timeval");
-        return -1;
-    }
-    tv->tv_usec = 0;
-    tv->tv_sec = 0;
-    
-    if(adapt == 1){
-        atm.est_rtt = start_timeout;
-        atm.dev_rtt = 0;
-    }
-    if((d = opendir(path)) == NULL){
-        print_error(1, "Error opening directory");
-        return -1;
-    }
-    send_base = 0;
-    end_num = -1; // Valore dell'ack dell'ultimo pacchetto
-    count = 0;
-    for(i = 0; i < N; i++){
-        window[i] = 1;
-        time[i] = 0; 
-    }
-    for(next_seq = 0; next_seq < send_base + N; next_seq++){
-        if(end_num != -1) break;
-        arg = malloc(sizeof(struct thread_arg));
-        m = malloc(sizeof(struct message));
-redo:
-        if((dir = readdir(d)) != NULL ){
-            if(dir->d_type == DT_REG){ // Considera solo file regolari, esclude le directory
-                line = (char *)malloc(MAX);
-                memset(line, 0, MAX);
-                sprintf(line, "%s\n", dir->d_name);
-                m->mess = line;
-                lRes = strlen(m->mess) + 1;
-                line = (char *)malloc(MAX);
-                memset(line, 0, MAX);
-                sprintf(line, "%d=%d", next_seq, lRes);
-                m->cmd = line;
-                arg->sd = sd;
-                arg->addr = client;
-                arg->m = m;
-                arg->t = timeout;
-                arg->time = &time[next_seq % N];
-                window[next_seq % N] = 0;
-                if(pthread_create(&window[next_seq % N], NULL, thread_send, (void *)arg) != 0) {
-                    print_error(0, "Error creating thread");
-                    for(i = 0; i < N; i++){
-                        if(window[i] != 0 && window[i] != 1){
-                            pthread_detach(window[i]);
-                            pthread_cancel(window[i]);
-                        }
-                    }
-                    return -1;
-                }
-                if(gettimeofday(tv, NULL) == -1){
-                    print_error(1, "Error getting time");
-                }
-                time[next_seq % N] = (tv->tv_sec) * 1000000 + tv->tv_usec;
-            }
-            else {
-                goto redo;
-            }
-        }
-        else {
-            line = (char *)malloc(20);
-            memset(line, 0, 20);
-            sprintf(line, "done=20=%ld", timeout);
-            m->cmd = line;
-            line = (char *)malloc(MAX);
-            memset(line, 0, MAX);
-            sprintf(line, "%d", next_seq);
-            m->mess = line;
-            arg->sd = sd;
-            arg->addr = client;
-            arg->m = m;
-            arg->t = timeout;
-            arg->time = &time[next_seq % N];
-            window[next_seq % N] = 0;
-            if(pthread_create(&window[next_seq % N], NULL, thread_send, (void *)arg) != 0) {
-                print_error(0, "Error creating thread");
-                for(i = 0; i < N; i++){
-                    if(window[i] != 0 && window[i] != 1){
-                        pthread_detach(window[i]);
-                        pthread_cancel(window[i]);
-                    }
-                }
-                return -1;
-            }
-            if(gettimeofday(tv, NULL) == -1){
-                print_error(1, "Error getting time");
-            }
-            time[next_seq % N] = (tv->tv_sec) * 1000000 + tv->tv_usec;
-            closedir(d);
-            end_num = next_seq;
-            break;
-        }
-    }
-    while(1){    
-        if(recv_mess(sd, &client, sizeof(client), &rm, 0, 500 * timeout) == -1){
-            for(i = 0; i < N; i++){
-                if(window[i] != 0 && window[i] != 1){
-                    pthread_detach(window[i]);
-                    pthread_cancel(window[i]);
-                }
-            }
-            free(tv);
-            return -1;
-        }
-        if(strncmp(rm.cmd, "done", 4) == 0){
-            // Il lato opposto ha terminato il download
-            for(i = 0; i < N; i++){
-                if(window[i] != 0 && window[i] != 1){
-                    pthread_detach(window[i]);
-                    pthread_cancel(window[i]);
-                }
-            }
-            while(1){
-                memset(rm.cmd, 0, 20);
-                strcpy(rm.cmd, "close=20");
-                rm.mess = NULL;
-                send_mess(sd, client, &rm);
-                free(rm.cmd);
-                if(recv_mess(sd, &client, sizeof(client), &rm, 0, 5 * timeout) == -1){
-                    break;
-                }
-                if(strncmp(rm.cmd, "done", 4) == 0){
-                    continue;
-                }
-                else {
-                    free(rm.cmd);
-                    free(rm.mess);
-                    break;
-                }
-            }
-            return 0;
-        }
-        else if(strncmp(rm.cmd, "ack", 3) == 0){
-            n = strtol(rm.mess, NULL, 10);  // Numero dell'ack
-            if(adapt == 1){
-                if(gettimeofday(tv, NULL) == -1){
-                    print_error(1, "Error getting time");
-                }
-                t = (tv->tv_sec) * 1000000 + tv->tv_usec;
-                t = t - time[n % N];
-                timeout = get_timeout(&atm, t);
-            }
-            if(send_base < n && n < send_base + N){
-                // L'ack è nella finestra
-                pthread_detach(window[n % N]);
-                pthread_cancel(window[n % N]);
-                window[n % N] = 0;
-            }
-            else if(send_base == n){
-                // Sposta la finestra
-                pthread_detach(window[send_base % N]);
-                pthread_cancel(window[send_base % N]);
-                window[send_base % N] = 0;
-                i = 0;
-                while(window[send_base % N] == 0 && i < N){
-                    send_base++;
-                    i++;
-                }
-                for(next_seq; next_seq < send_base + N; next_seq++){
-redo2:
-                    if((dir = readdir(d)) != NULL ){
-                        if(dir->d_type == DT_REG){
-                            arg = malloc(sizeof(struct thread_arg));
-                            m = malloc(sizeof(struct message));
-                            line = (char *)malloc(MAX);
-                            memset(line, 0, MAX);
-                            sprintf(line, "%s\n", dir->d_name);
-                            m->mess = line;
-                            lRes = strlen(m->mess) + 1;
-                            line = (char *)malloc(MAX);
-                            memset(line, 0, MAX);
-                            sprintf(line, "%d=%d", next_seq, lRes);
-                            m->cmd = line;
-                            arg->sd = sd;
-                            arg->addr = client;
-                            arg->m = m;
-                            arg->t = timeout;
-                            arg->time = &time[next_seq % N];
-                            window[next_seq % N] = 0;
-                            if(pthread_create(&window[next_seq % N], NULL, thread_send, (void *)arg) != 0){
-                                print_error(0, "Error creating thread");
-                                for(i = 0; i < N; i++){
-                                    if(window[i] != 0 && window[i] != 1){
-                                        pthread_detach(window[i]);
-                                        pthread_cancel(window[i]);
-                                    }
-                                }
-                                return -1;
-                            }
-                            if(gettimeofday(tv, NULL) == -1){
-                                print_error(1, "Error getting time");
-                            }
-                            time[next_seq % N] = (tv->tv_sec) * 1000000 + tv->tv_usec;
-                        }
-                        else{
-                            goto redo2;
-                        }
-                    }
-                    else{
-                        arg = malloc(sizeof(struct thread_arg));
-                        m = malloc(sizeof(struct message));
-                        line = (char *)malloc(20);
-                        sprintf(line, "done=20=%ld", timeout);
-                        m->cmd = line;
-                        line = (char *)malloc(MAX);
-                        memset(line, 0, MAX);      
-                        sprintf(line, "%d", next_seq);
-                        m->mess = line;
-                        arg->sd = sd;
-                        arg->addr = client;
-                        arg->m = m;
-                        arg->t = timeout;
-                        arg->time = &time[next_seq % N];
-                        window[next_seq % N] = 0;
-                        if(pthread_create(&window[next_seq % N], NULL, thread_send, (void *)arg) != 0){
-                            print_error(0, "Error creating thread");
-                            for(i = 0; i < N; i++){
-                                if(window[i] != 0 && window[i] != 1){
-                                    pthread_detach(window[i]);
-                                    pthread_cancel(window[i]);
-                                }
-                            }
-                            return -1;
-                        }
-                        if(gettimeofday(tv, NULL) == -1){
-                            print_error(1, "Error getting time");
-                        }
-                        time[next_seq % N] = (tv->tv_sec) * 1000000 + tv->tv_usec;
-                        closedir(d);
-                        end_num = next_seq;
-                        break;
-                    }
-                }
-            }
-        }
-        else{
-            if(count >= 3){
-                for(i = 0; i < N; i++){
-                    if(window[i] != 0 && window[i] != 1){
-                        pthread_detach(window[i]);
-                        pthread_cancel(window[i]);
-                    }
-                }
-                return -1;
-            }
-            count++;
         }
     }
 }

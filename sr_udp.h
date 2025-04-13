@@ -18,6 +18,7 @@ void print_success(char *string);
 int send_mess(int sd, struct sockaddr_in server, struct message *m);
 int recv_mess(int sd, struct sockaddr_in *server, socklen_t size, struct message *m, int sec, int usec);
 int syn_handshake_client(int sd, struct sockaddr_in server);
+int syn_handshake_server(int sd, struct sockaddr_in *client);
 int find_port(int sd, struct sockaddr_in client, int start, int maxcon);
 int connect_server(int sd, struct sockaddr_in client, conn_arg ca);
 int listFunc(int sd, struct sockaddr_in client,int N, int start_timeout, int adapt, char* path);

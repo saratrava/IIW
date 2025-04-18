@@ -456,14 +456,14 @@ int connect_client(int default_port, char *server_ip, conn_arg *ca) {
         return -1;
     }
     
-    /*// ESEMPIO DI 3-Way HANDSHAKE
+    // ESEMPIO DI 3-Way HANDSHAKE
     if(syn_handshake_client(sd, server) == -1) {
         print_error(0, "Error during 3-way handshake (client side)");
         close(sd);
         return -1;
     }
     
-    // Dopo il 3-way handshake, il client può procedere a inviare la richiesta di connessione*/
+    // Dopo il 3-way handshake, il client può procedere a inviare la richiesta di connessione
 
 reconnect:
     m.cmd = "conn";

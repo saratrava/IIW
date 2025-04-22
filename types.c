@@ -3,6 +3,9 @@
 #include <stdbool.h>
 #include <arpa/inet.h>
 
+#include "sr_udp.h"
+#include "types.h"
+
 #define MAX 4096    // Dimensione della PDU
 
 

@@ -1,21 +1,11 @@
 // file_ops.h
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <pthread.h>
-#include <stdbool.h>
-#include <signal.h>
-#include <time.h>
 
-#include <arpa/inet.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include "types.h"
+#include "socket_comm.h"
+#include "protocol.h"
+#include "utils.h"
 
 int download_file(int sd, struct sockaddr_in addr, FILE* fd, int N);
 int upload_file(int sd, struct sockaddr_in addr, FILE* fd, int N, int start_timeout, int adapt, int dim);

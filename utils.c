@@ -12,16 +12,10 @@ Funzioni di I/O
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <dirent.h>
-#include <pthread.h>
-#include <stdbool.h>
-#include <signal.h>
-#include <time.h>
 
-#include <arpa/inet.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+
+#include "sr_udp.h"
+#include "utils.h"
 
 /*
  * @brief Visualizza un messaggio di errore evidenziato in rosso.

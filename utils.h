@@ -4,16 +4,10 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <dirent.h>
-#include <pthread.h>
-#include <stdbool.h>
-#include <signal.h>
-#include <time.h>
 
-#include <arpa/inet.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+
+
+
 
 
 void print_error(int i, char *string);

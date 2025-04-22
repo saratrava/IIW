@@ -21,6 +21,7 @@ int syn_handshake_client(int sd, struct sockaddr_in server);
 int syn_handshake_server(int sd, struct sockaddr_in *client);
 int find_port(int sd, struct sockaddr_in client, int start, int maxcon);
 int connect_server(int sd, struct sockaddr_in client, conn_arg ca);
+int connect_client(int sd, int default_port, char *server_ip, conn_arg *ca);
 int listFunc(int sd, struct sockaddr_in client,int N, int start_timeout, int adapt, char* path);
 int getFunc(int sd, struct sockaddr_in client,char *file,int N, int timeout, int adapt);
 int putFunc(int sd, struct sockaddr_in client,char *file,int N);

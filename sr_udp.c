@@ -23,6 +23,7 @@
 #define BETA 0.25
 //--------------------------------------------------------------------------------------------------------------
 
+/*
 typedef struct message {
     char *cmd;      // Comando
     char *mess;     // Contenuto del messaggio
@@ -270,29 +271,36 @@ Connessione Client-Server
  */
 int syn_handshake_client(int sd, struct sockaddr_in server) {
     message m;
+    char *line = malloc(MAX+20);
+    socklen_t serlen = sizeof(server);
+
     // Fase 1: Invia SYN
     m.cmd = "SYN";
     m.mess = NULL;
-    if(send_mess(sd, server, &m) == -1) {
+    memcpy(line, m.cmd, 3);
+
+    if(sendto(sd, line, MAX+20, 0, (struct sockaddr *)&server, sizeof(server)) < 0) {
         print_error(1, "Error sending SYN");
         return -1;
     }
     
     // Fase 2: Attende SYN-ACK
-    if(recv_mess(sd, &server, sizeof(server), &m, 5, 0) == -1) {
+
+    if(recvfrom(sd, line, MAX+20, 0, (struct sockaddr *)&server, &serlen) < 0) {
         print_error(1, "Error receiving SYN-ACK");
         return -1;
     }
     printf("Client: ricevuto SYN-ACK: cmd='%s', mess='%s'\n", m.cmd, m.mess);
-    if(strncmp(m.cmd, "SYN-ACK", 7) != 0) {
+    if(strncmp(line, "SYN-ACK", 7) != 0) {
         print_error(0, "Handshake error: Expected SYN-ACK");
         return -1;
     }
-    
+
     // Fase 3: Invia ACK
     m.cmd = "ACK";
     m.mess = NULL;
-    if(send_mess(sd, server, &m) == -1) {
+    memcpy(line, m.cmd, 20);
+    if(sendto(sd, line, MAX+20, 0, (struct sockaddr *)&server, &serlen) < 0) {
         print_error(1, "Error sending ACK");
         return -1;
     }
@@ -311,9 +319,12 @@ int syn_handshake_client(int sd, struct sockaddr_in server) {
  * @param client Puntatore alla struttura che conterrà l'indirizzo del client.
  * @return Ritorna 0 se lo handshake va a buon fine, -1 in caso di errore.
  */
-int syn_handshake_server(int sd, struct sockaddr_in *client) {
+int syn_handshake_server(int sd, struct sockaddr_in client) {
     message m;
-    socklen_t clilen = sizeof(*client);
+    char *line = malloc(MAX+20);
+    socklen_t clilen = sizeof(client);
+    struct sockaddr_in server;
+    socklen_t serlen = sizeof(server);
     
     // Allocazione dei buffer per ricevere i messaggi
     m.cmd = malloc(20);
@@ -329,26 +340,27 @@ int syn_handshake_server(int sd, struct sockaddr_in *client) {
     }
     
     // Riceve il messaggio SYN dal client
-    if(recvfrom(sd, m.cmd, 20, 0, (struct sockaddr *)client, &clilen) < 0) {
+    if(recvfrom(sd, line, 3, 0, (struct sockaddr *)&client, sizeof(client)) < 0) {
         print_error(1, "Error receiving SYN");
         free(m.cmd);
         free(m.mess);
         return -1;
     }
     // Controlla il contenuto
-    if(strncmp(m.cmd, "SYN", 3) != 0) {
+    if(strncmp(line, "SYN", 3) != 0) {
         print_error(0, "Handshake error: Expected SYN");
         free(m.cmd);
         free(m.mess);
         return -1;
     }
-    printf("Server: ricevuto SYN: '%s'\n", m.cmd);
+    printf("Server: ricevuto SYN: '%s'\n", line);
     
     // Preparazione del SYN-ACK
     char params[MAX];
     snprintf(params, MAX, "%d %d %d %d", 8080, 5, 10000, 1);  
     free(m.cmd); 
-    m.cmd = strdup("SYN-ACK");
+    m.cmd = "SYN-ACK";
+    memcpy(line, m.cmd, 20);
     if(m.cmd == NULL) {
         print_error(1, "Memory allocation error for SYN-ACK cmd");
         free(m.mess);
@@ -361,7 +373,7 @@ int syn_handshake_server(int sd, struct sockaddr_in *client) {
         return -1;
     }
     
-    if(send_mess(sd, *client, &m) == -1) {
+    if(sendto(sd, line, MAX+20, 0, (struct sockaddr *)&server, &serlen) < 0) {
         print_error(1, "Error sending SYN-ACK");
         free(m.cmd);
         free(m.mess);
@@ -382,13 +394,13 @@ int syn_handshake_server(int sd, struct sockaddr_in *client) {
         return -1;
     }
     
-    if(recvfrom(sd, m.cmd, 20, 0, (struct sockaddr *)client, &clilen) < 0) {
+    if(recvfrom(sd, line, MAX+20, 0, (struct sockaddr *)&client, sizeof(client)) < 0) {
         print_error(1, "Error receiving ACK");
         free(m.cmd);
         free(m.mess);
         return -1;
     }
-    if(strncmp(m.cmd, "ACK", 3) != 0) {
+    if(strncmp(line, "ACK", 3) != 0) {
         print_error(0, "Handshake error: Expected ACK");
         free(m.cmd);
         free(m.mess);
@@ -437,16 +449,16 @@ int find_port(int sd, struct sockaddr_in client, int start, int maxcon) {
  * @param ca Puntatore a una struttura contenente i parametri di connessione (porta, dimensione finestra, timeout, flag adattivo).
  * @return Ritorna 0 se la connessione viene inizializzata correttamente, -1 in caso di errore.
  */
-int connect_client(int default_port, char *server_ip, conn_arg *ca) {
-    int sd, count, i;
+int connect_client(int sd, int default_port, char *server_ip, conn_arg *ca) {
+    int count, i;
     struct sockaddr_in server;
     message m;
     count = 0;
     
-    if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
+    /*if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
         print_error(1,"Error connecting to the server (3)");
         return -1;
-    }
+    }*/
     memset((void *)&server, 0, sizeof(server));
     server.sin_family = AF_INET;
     server.sin_port = htons(default_port);
@@ -1553,6 +1565,7 @@ retryPut:
         return -1;
     }
 }
+*/
 
 /*
 ================================================================================

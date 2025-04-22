@@ -6,22 +6,21 @@ Connessione Client-Server
 ================================================================================
 */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <dirent.h>
-#include <pthread.h>
-#include <stdbool.h>
-#include <signal.h>
-#include <time.h>
 
 #include <arpa/inet.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+
+#include "sr_udp.h"
+#include "handshake.h"
+#include "utils.h"
+#include "socket_comm.h"
+
 
 /*
  * @brief Implementa un semplice 3-Way Handshake lato Client utilizzando UDP.

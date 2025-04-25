@@ -2,11 +2,6 @@
 
 #include <stdio.h>
 
-#include "types.h"
-#include "socket_comm.h"
-#include "protocol.h"
-#include "utils.h"
-
 int download_file(int sd, struct sockaddr_in addr, FILE* fd, int N);
 int upload_file(int sd, struct sockaddr_in addr, FILE* fd, int N, int start_timeout, int adapt, int dim);
 int listFunc(int sd, struct sockaddr_in client, int N, int start_timeout, int adapt, char *path);

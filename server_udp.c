@@ -12,7 +12,13 @@
 #include <sys/socket.h>
 #include <sys/ipc.h>
 
-#include "sr_udp.h"
+#include "types.h"
+#include "utils.h"
+#include "socket_comm.h"
+#include "handshake.h"
+#include "protocol.h"
+#include "file_ops.h"
+
 
 //-----------------------------------------------------------------------------------------------------------------------------
 #define PORT 50000		//Porta di default del server
@@ -37,6 +43,8 @@ int main(int argc, char **argv){
 	struct sockaddr_in new_client;
 	conn_arg ca;
 	int new_sd;
+	socklen_t clilen = sizeof(client);
+
 
 	if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
 		print_error(1, "Error in creating socket");
@@ -57,34 +65,29 @@ int main(int argc, char **argv){
 	  	return -1;
 	}
 
-	if(recv_mess(sd, &client, sizeof(client), &m, 0, 0) == -1){
-		print_error(1, "Error receiving message");
-		continue;
-	}
 	
-	if(strcmp(m.cmd, "SYN") == 0) {
-    		if (syn_handshake_server(sd, &client) == -1) {
-        		print_error(0, "3-way handshake failed");
-       	 		continue;
-    		}
-    		// Dopo handshake, aspetta il comando 'conn'
-    		if(recv_mess(sd, &client, sizeof(client), &m, 0, 0) == -1){
-        		print_error(1, "Error receiving connection request after handshake");
-        		continue;
-    		}
-	}
 
 	system("clear");
 	print_success("Server started successfully. Waiting for clients...");
 
 	while(1){
 
+		/*if(recvfrom(sd, m.cmd, 20, 0, (struct sockaddr *)&client, &clilen) < 0) {
+			print_error(1, "Error receiving SYN");
+			continue;
+		}
+	
+		if(strcmp(m.cmd, "SYN") == 0) {
+			if (syn_handshake_server(sd, &client) == -1) {
+				print_error(0, "3-way handshake failed");
+				continue;
+			}
+		}*/
 
 		if(recv_mess(sd, &client, sizeof(client), &m, 0, 0) == -1){
 			print_error(1, "Error receiving message");
 			continue;
 		}
-
 
 		if(strcmp(m.cmd, "conn") == 0){
 

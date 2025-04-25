@@ -13,9 +13,7 @@ Funzioni di I/O
 #include <fcntl.h>
 #include <unistd.h>
 
-
-#include "sr_udp.h"
-#include "utils.h"
+#include "types.h"
 
 /*
  * @brief Visualizza un messaggio di errore evidenziato in rosso.

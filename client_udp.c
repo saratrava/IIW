@@ -6,7 +6,12 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-#include "sr_udp.h"
+#include "types.h"
+#include "utils.h"
+#include "socket_comm.h"
+#include "handshake.h"
+#include "protocol.h"
+#include "file_ops.h"
 
 //---------------------------------------------------------------------------------------------------------------
 #define IP "127.0.0.1"			//Ip server
@@ -113,7 +118,7 @@ retry:
 		}
 		else if(strcmp(cmd,"ls") == 0){	
 			printf("\n");
-			system("ls client/files/");	//stampa la lista dei file disponibili per l'upload su server
+			system("ls client_src/files/");	//stampa la lista dei file disponibili per l'upload su server
 			printf("\n");
 		}										
 		else if(strcmp(cmd,"help") == 0){

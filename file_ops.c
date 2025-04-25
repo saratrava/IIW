@@ -5,13 +5,14 @@
 Funzioni LIST - GET - PUT
 ================================================================================
 */
-
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <pthread.h>
 
 #include <arpa/inet.h>
 #include <sys/time.h>
@@ -19,8 +20,8 @@ Funzioni LIST - GET - PUT
 #include <sys/socket.h>
 #include <sys/stat.h>
 
-#include "sr_udp.h"
-#include "file_ops.h"
+#include "types.h"
+#include "protocol.h"
 
 /*
  * @brief Riceve un file tramite socket e lo salva sul file system.

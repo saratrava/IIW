@@ -6,6 +6,13 @@
 #include <netinet/in.h>
 
 #define MAX 4096    // Dimensione della PDU
+#define PROB 0.125       // Probabilità simulata di errore
+
+// PARAMETRI PER IL TIMEOUT ADATTIVO ----------------------------------------------------------------------------
+#define ALPHA 0.125
+#define BETA 0.25
+//--------------------------------------------------------------------------------------------------------------
+
 
 /**
  * @brief Struttura per comando e payload

@@ -16,10 +16,8 @@ Connessione Client-Server
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "sr_udp.h"
-#include "handshake.h"
 #include "utils.h"
-#include "socket_comm.h"
+#include "types.h"
 
 
 /*
@@ -213,16 +211,16 @@ int find_port(int sd, struct sockaddr_in client, int start, int maxcon) {
  * @param ca Puntatore a una struttura contenente i parametri di connessione (porta, dimensione finestra, timeout, flag adattivo).
  * @return Ritorna 0 se la connessione viene inizializzata correttamente, -1 in caso di errore.
  */
-int connect_client(int sd, int default_port, char *server_ip, conn_arg *ca) {
-    int count, i;
+int connect_client(int default_port, char *server_ip, conn_arg *ca) {
+    int count, i, sd;
     struct sockaddr_in server;
     message m;
     count = 0;
     
-    /*if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
+    if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
         print_error(1,"Error connecting to the server (3)");
         return -1;
-    }*/
+    }
     memset((void *)&server, 0, sizeof(server));
     server.sin_family = AF_INET;
     server.sin_port = htons(default_port);
@@ -232,14 +230,14 @@ int connect_client(int sd, int default_port, char *server_ip, conn_arg *ca) {
         return -1;
     }
     
-    // ESEMPIO DI 3-Way HANDSHAKE
+    /*// ESEMPIO DI 3-Way HANDSHAKE
     if(syn_handshake_client(sd, server) == -1) {
         print_error(0, "Error during 3-way handshake (client side)");
         close(sd);
         return -1;
     }
     
-    // Dopo il 3-way handshake, il client può procedere a inviare la richiesta di connessione
+    // Dopo il 3-way handshake, il client può procedere a inviare la richiesta di connessione*/
 
 reconnect:
     m.cmd = "conn";

@@ -23,8 +23,7 @@ Selective Repeat UDP
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "sr_udp.h"
-#include "socket_comm.h"
+#include "types.h"
 
 
 

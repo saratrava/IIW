@@ -16,10 +16,9 @@ Selective Repeat UDP
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "sr_udp.h"
-#include "protocol.h"
-#include "utils.h"
+#include "types.h"
 #include "socket_comm.h"
+
 
 /*
  * @brief Calcola un timeout aggiornato utilizzando i meccanismi di stima RTT e deviazione.

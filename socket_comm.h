@@ -17,8 +17,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "types.h"
-
 bool prob(double p);
 void set_timeout(int socket, int sec, long usec);
 int send_mess(int sd, struct sockaddr_in server, struct message *m);

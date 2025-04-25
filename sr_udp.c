@@ -15,6 +15,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include "types.h"
+
 #define MAX 4096         // Dimensione della PDU
 #define PROB 0.125       // Probabilità simulata di errore
 
@@ -60,7 +62,7 @@ Funzioni di I/O
  * @brief Visualizza un messaggio di errore evidenziato in rosso.
  * @param i Flag che, se attivo, utilizza perror; string Descrizione dell'errore.
  * @return Nessun valore restituito.
- */
+ 
 void print_error(int i, char *string) {
     printf("\033[1;31m\n");
     if(i == 1){
@@ -76,7 +78,7 @@ void print_error(int i, char *string) {
  * @brief Stampa un messaggio evidenziato in verde.
  * @param string Il testo da visualizzare.
  * @return Nessun valore restituito.
- */
+ 
 void print_success(char *string) {
     printf("\033[1;32m\n\n");
     printf("%s", string);
@@ -89,7 +91,7 @@ void print_success(char *string) {
  * @param buf Buffer contenente i dati da scrivere.
  * @param n Numero di byte da trasferire.
  * @return Numero di byte effettivamente scritti.
- */
+ 
 ssize_t writen(FILE *f, const void *buf, size_t n) {
     size_t nleft;
     const char *ptr;
@@ -118,7 +120,7 @@ ssize_t writen(FILE *f, const void *buf, size_t n) {
  * @param vptr Buffer in cui salvare i dati letti.
  * @param maxlen Dimensione massima dei byte da leggere.
  * @return Numero di byte letti.
- */
+ 
 int readn(FILE* f, void *vptr, int maxlen) {
     int n, ch;
     char *ptr;
@@ -142,13 +144,12 @@ int readn(FILE* f, void *vptr, int maxlen) {
 ================================================================================
 Selective Repeat UDP
 ================================================================================
-*/
 
 /*
  * @brief Simula la perdita di un pacchetto mediante un valore casuale.
  * @param p Probabilità che il pacchetto venga considerato perso.
  * @return Ritorna true se il pacchetto deve essere scartato, false altrimenti.
- */
+ 
 bool prob(double p) {
     return rand() < p * ((double)RAND_MAX + 1.0);
 }
@@ -159,7 +160,7 @@ bool prob(double p) {
  * @param sec Numero di secondi per il timeout.
  * @param usec Numero di microsecondi per il timeout.
  * @return Nessun valore restituito.
- */
+ 
 void set_timeout(int socket, int sec, long usec) {
     struct timeval tv;
     tv.tv_sec = sec;         // Secondi
@@ -183,7 +184,7 @@ void set_timeout(int socket, int sec, long usec) {
  * @param server Struttura contenente l’indirizzo del destinatario.
  * @param m Struttura che contiene il comando e il messaggio da inviare.
  * @return Ritorna 0 se l’invio va a buon fine, -1 in caso di errore.
- */
+ 
 int send_mess(int sd, struct sockaddr_in server, struct message *m) {
     char *line = malloc(20);
     char *line2 = malloc(MAX);
@@ -227,7 +228,7 @@ int send_mess(int sd, struct sockaddr_in server, struct message *m) {
  * @param sec Numero di secondi per il timeout.
  * @param usec Numero di microsecondi per il timeout.
  * @return Ritorna 0 se l’operazione ha successo, -1 in caso di fallimento.
- */
+ 
 int recv_mess(int sd, struct sockaddr_in *server, socklen_t size, struct message *m, int sec, long usec) {
     int n;
     char line[MAX+20];
@@ -256,7 +257,7 @@ int recv_mess(int sd, struct sockaddr_in *server, socklen_t size, struct message
 ================================================================================
 Connessione Client-Server
 ================================================================================
-*/
+
 
 /*
  * @brief Implementa un semplice 3-Way Handshake lato Client utilizzando UDP.
@@ -268,7 +269,7 @@ Connessione Client-Server
  * @param sd Descrittore del socket.
  * @param server Struttura contenente l’indirizzo del server.
  * @return Ritorna 0 se lo handshake va a buon fine, -1 in caso di errore.
- */
+ 
 int syn_handshake_client(int sd, struct sockaddr_in server) {
     message m;
     char *line = malloc(MAX+20);
@@ -318,7 +319,7 @@ int syn_handshake_client(int sd, struct sockaddr_in server) {
  * @param sd Descrittore del socket.
  * @param client Puntatore alla struttura che conterrà l'indirizzo del client.
  * @return Ritorna 0 se lo handshake va a buon fine, -1 in caso di errore.
- */
+ 
 int syn_handshake_server(int sd, struct sockaddr_in client) {
     message m;
     char *line = malloc(MAX+20);
@@ -419,7 +420,7 @@ int syn_handshake_server(int sd, struct sockaddr_in client) {
  * @param start Porta iniziale da cui partire la ricerca.
  * @param maxcon Numero massimo di tentativi (connessioni) consentiti.
  * @return Ritorna il numero della porta trovata se disponibile, -1 se nessuna porta risulta libera.
- */
+ 
 int find_port(int sd, struct sockaddr_in client, int start, int maxcon) {
     int count, new_port;
     count = 0;
@@ -448,7 +449,7 @@ int find_port(int sd, struct sockaddr_in client, int start, int maxcon) {
  * @param server_ip Indirizzo IP del server.
  * @param ca Puntatore a una struttura contenente i parametri di connessione (porta, dimensione finestra, timeout, flag adattivo).
  * @return Ritorna 0 se la connessione viene inizializzata correttamente, -1 in caso di errore.
- */
+ 
 int connect_client(int sd, int default_port, char *server_ip, conn_arg *ca) {
     int count, i;
     struct sockaddr_in server;
@@ -458,7 +459,7 @@ int connect_client(int sd, int default_port, char *server_ip, conn_arg *ca) {
     /*if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
         print_error(1,"Error connecting to the server (3)");
         return -1;
-    }*/
+    }
     memset((void *)&server, 0, sizeof(server));
     server.sin_family = AF_INET;
     server.sin_port = htons(default_port);
@@ -515,7 +516,7 @@ reconnect:
  * @param client Indirizzo del client che stabilisce la connessione.
  * @param ca Struttura contenente i parametri necessari alla connessione.
  * @return Ritorna 0 se la configurazione va a buon fine, -1 in caso di problemi.
- */
+ 
 int connect_server(int sd, struct sockaddr_in client, conn_arg ca) {
     message m;
     m.cmd = malloc(20);
@@ -536,7 +537,7 @@ int connect_server(int sd, struct sockaddr_in client, conn_arg ca) {
  * @param sd Descrittore del socket.
  * @param server Struttura contenente l’indirizzo del server.
  * @return Nessun valore restituito.
- */
+ 
 void quit_conn(int sd, struct sockaddr_in server) {
     message m;
     m.cmd = "quit";
@@ -556,7 +557,7 @@ Funzioni LIST - GET - PUT
  * @param atm Struttura contenente le stime del RTT e la deviazione corrente.
  * @param new Nuovo valore misurato del timeout.
  * @return Il nuovo timeout calcolato.
- */
+ 
 long get_timeout(adaptive_tm *atm, long new) {
     atm->est_rtt = (1-ALPHA)*(atm->est_rtt) + ALPHA*new;
     atm->dev_rtt = (1-BETA)*(atm->dev_rtt) + BETA*abs(new - atm->est_rtt);
@@ -567,7 +568,7 @@ long get_timeout(adaptive_tm *atm, long new) {
  * @brief Funzione eseguita in un thread per l’invio ripetuto di un messaggio.
  * @param arg Puntatore a una struttura contenente i parametri necessari al thread (socket, indirizzo, messaggio, timeout, ecc.).
  * @return Nessun valore restituito.
- */
+ 
 void *thread_send(void *arg) {
     thread_arg *ta = (thread_arg *)arg;
     struct timeval tv;
@@ -616,7 +617,7 @@ void *thread_send(void *arg) {
  * @param fd Puntatore al file destinazione dove scrivere i dati ricevuti.
  * @param N Dimensione della finestra di ricezione.
  * @return Ritorna 0 se il trasferimento del file ha successo, -1 in caso di errore.
- */
+ 
 int download_file(int sd, struct sockaddr_in addr, FILE* fd, int N) {
     char *window[N];
     int dim[N];
@@ -745,7 +746,7 @@ int download_file(int sd, struct sockaddr_in addr, FILE* fd, int N) {
  * @param adapt Flag che indica se utilizzare il timeout adattivo.
  * @param dim Dimensione totale del file da trasferire.
  * @return Ritorna 0 se il file viene inviato correttamente, -1 in caso di errori.
- */
+ 
 int upload_file(int sd, struct sockaddr_in addr, FILE* fd, int N, int start_timeout, int adapt, int dim) {
     pthread_t window[N];
     long time[N];
@@ -1039,7 +1040,7 @@ redo2:
  * @param adapt Flag per l’utilizzo del timeout adattivo.
  * @param path Percorso della directory contenente i file.
  * @return Ritorna 0 se la lista viene inviata correttamente, -1 in caso di problemi.
- */
+ 
 int listFunc(int sd, struct sockaddr_in client, int N, int start_timeout, int adapt, char *path) {
     DIR *d;
     struct dirent *dir;
@@ -1319,7 +1320,7 @@ redo2:
  * @param timeout Timeout iniziale.
  * @param adapt Flag per il timeout adattivo.
  * @return Ritorna 0 se tutto procede correttamente, -1 se si verifica un errore.
- */
+ 
 int getFunc(int sd, struct sockaddr_in client, char *file, int N, int timeout, int adapt) {
     char line[MAX];
     int fd;
@@ -1365,7 +1366,7 @@ open:
  * @param file Percorso del file da ricevere.
  * @param N Dimensione della finestra.
  * @return Ritorna 0 se il processo di ricezione viene avviato correttamente, -1 in caso di errori.
- */
+ 
 int putFunc(int sd, struct sockaddr_in client, char *file, int N) {
     char line[MAX];
     FILE *f;
@@ -1419,7 +1420,7 @@ open:
  * @param N Dimensione della finestra di ricezione.
  * @param timeout Timeout iniziale.
  * @return Ritorna 0 se la richiesta viene completata con successo, -1 se si verifica un errore.
- */
+ 
 int list_files(int sd, struct sockaddr_in server, int N, int timeout) {
     struct message *m = malloc(sizeof(struct message));
     // Invio del comando al server
@@ -1458,7 +1459,7 @@ retryList:
  * @param N Dimensione della finestra di ricezione.
  * @param timeout Timeout iniziale.
  * @return Ritorna 0 se il file viene scaricato con successo, -1 in caso di errore.
- */
+ 
 int get_file(int sd, struct sockaddr_in server, char *file, char *dir_path, int N, int timeout) {
     FILE* f;
     char line[MAX], path[MAX];
@@ -1514,7 +1515,7 @@ retryGet:
  * @param timeout Timeout iniziale.
  * @param adapt Flag per l’utilizzo del timeout adattivo.
  * @return Ritorna 0 se l’upload avviene correttamente, -1 in caso di problemi.
- */
+ 
 int put_file(int sd, struct sockaddr_in server, char *file, char *dir_path, int N, int timeout, int adapt) {
     char path[MAX], line[20];  
     int n, fd, putRN = 0;

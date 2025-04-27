@@ -8,10 +8,11 @@
 
 #include "types.h"
 #include "utils.h"
-#include "socket_comm.h"
+#include "reliable_com.h"
 #include "handshake.h"
 #include "protocol.h"
 #include "file_ops.h"
+#include "debug.h"
 
 //---------------------------------------------------------------------------------------------------------------
 #define IP "127.0.0.1"			//Ip server

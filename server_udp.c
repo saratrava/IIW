@@ -14,19 +14,18 @@
 
 #include "types.h"
 #include "utils.h"
-#include "socket_comm.h"
+#include "reliable_com.h"
 #include "handshake.h"
 #include "protocol.h"
 #include "file_ops.h"
 
-
-//-----------------------------------------------------------------------------------------------------------------------------
+//------------------------------------PARAMETRI CONFIGURAZIONE SERVER-----------------------------------------------
 #define PORT 50000		//Porta di default del server
 #define NUMPORT 15000	//Numero massimo di connessioni concorrenti
 #define N 5				//Dimensione finestra
 #define T 10000			//Timeout in microsecondi
 #define ADAP 1			//Flag per il timeout adattivo
-//-----------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------
 
 #define MAX 4096
 #define PATH "server_src/files/"
@@ -71,18 +70,6 @@ int main(int argc, char **argv){
 	print_success("Server started successfully. Waiting for clients...");
 
 	while(1){
-
-		/*if(recvfrom(sd, m.cmd, 20, 0, (struct sockaddr *)&client, &clilen) < 0) {
-			print_error(1, "Error receiving SYN");
-			continue;
-		}
-	
-		if(strcmp(m.cmd, "SYN") == 0) {
-			if (syn_handshake_server(sd, &client) == -1) {
-				print_error(0, "3-way handshake failed");
-				continue;
-			}
-		}*/
 
 		if(recv_mess(sd, &client, sizeof(client), &m, 0, 0) == -1){
 			print_error(1, "Error receiving message");

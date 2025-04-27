@@ -17,7 +17,7 @@ Selective Repeat UDP
 #include <sys/socket.h>
 
 #include "types.h"
-#include "socket_comm.h"
+#include "reliable_com.h"
 
 
 /*

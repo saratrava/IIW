@@ -71,7 +71,7 @@ int main(int argc, char **argv){
 
 	while(1){
 
-		if(recv_mess(sd, &client, sizeof(client), &m, 0, 0) == -1){
+		if(rdt_rcv(sd, &client, sizeof(client), &m, 0, 0) == -1){
 			print_error(1, "Error receiving message");
 			continue;
 		}
@@ -95,7 +95,7 @@ int main(int argc, char **argv){
 				m.cmd = "err";
 				m.mess = "Error starting connection: Server is full, please retry in a few minutes";
 
-				send_mess(sd, client, &m);
+				rdt_send(sd, client, &m);
 				close(new_sd);
 				continue;
 			}
@@ -112,7 +112,7 @@ int main(int argc, char **argv){
 					while(1){
 
 						//Se il client non contatta il server per troppo tempo la comunicazione viene interrotta
-						if(recv_mess(new_sd, &new_client, sizeof(new_client), &m, 60*3, 0) == -1){
+						if(rdt_rcv(new_sd, &new_client, sizeof(new_client), &m, 60*3, 0) == -1){
 							break;
 						}
 

@@ -1,3 +1,9 @@
+/*
+================================================================================
+File Transfer Debug and Test
+================================================================================
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,11 +23,6 @@
 
 #include "types.h"
 
-/*
-================================================================================
-Debug e Test del Trasferimento File
-================================================================================
-*/
 
 /*
  * @brief Funzione di debug usata dal client per testare i comandi list, get e put.
@@ -32,7 +33,7 @@ Debug e Test del Trasferimento File
  * @param path Percorso della directory utilizzata per il test (sorgente o destinazione del file).
  * @return Nessun valore restituito.
  */
-void file_transfer_debug(conn_arg args, int sd, struct sockaddr_in server, char *func, char *path) {
+void debug_and_test(conn_arg args, int sd, struct sockaddr_in server, char *func, char *path) {
     int n, count, i, j;
     float total, average;
     char file[200];
@@ -94,7 +95,7 @@ retry1:
         if(n <= 0){
             if(n == EOF){
                 print_error(1, "Error reading input");
-                quit_conn(sd, server);
+                close_conn(sd, server);
                 fclose(fd);
                 return;
             }
@@ -134,7 +135,7 @@ retry2:
         if(n <= 0){
             if(n == EOF){
                 print_error(1, "Error reading input");
-                quit_conn(sd, server);
+                close_conn(sd, server);
                 fclose(fd);
                 return;
             }

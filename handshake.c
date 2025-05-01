@@ -1,8 +1,6 @@
-//handshake.c
-
 /*
 ================================================================================
-Connessione Client-Server
+Client-Server Connection
 ================================================================================
 */
 
@@ -248,11 +246,11 @@ reconnect:
         close(sd);
         return -1;
     }
-    if(send_mess(sd, server, &m) == -1){
+    if(rdt_send(sd, server, &m) == -1){
         close(sd);
         return -1;
     }
-    if(recv_mess(sd, &server, sizeof(server), &m, 1, 0) == -1){
+    if(rdt_rcv(sd, &server, sizeof(server), &m, 1, 0) == -1){
         count++;
         goto reconnect;
     }
@@ -285,7 +283,7 @@ int connect_server(int sd, struct sockaddr_in client, conn_arg ca) {
     sprintf(m.cmd, "conn");
     sprintf(m.mess, "%d %d %d %d", ca.port, ca.window, ca.timeout, ca.adapt);
     
-    if(send_mess(sd, client, &m) == -1){
+    if(rdt_send(sd, client, &m) == -1){
         return -1;
     }
     free(m.cmd);
@@ -299,9 +297,9 @@ int connect_server(int sd, struct sockaddr_in client, conn_arg ca) {
  * @param server Struttura contenente l’indirizzo del server.
  * @return Nessun valore restituito.
  */
-void quit_conn(int sd, struct sockaddr_in server) {
+void close_conn(int sd, struct sockaddr_in server) {
     message m;
     m.cmd = "quit";
     m.mess = NULL;
-    send_mess(sd, server, &m);
+    rdt_send(sd, server, &m);
 }

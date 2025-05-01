@@ -1,8 +1,6 @@
-//protocol.c
-
 /*
 ================================================================================
-Selective Repeat UDP
+Timeout and Pipelining
 ================================================================================
 */
 
@@ -63,7 +61,7 @@ void *thread_send(void *arg) {
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype);
     
     while(1) {
-        send_mess(ta->sd, ta->addr, ta->m);  // Invia il messaggio
+        rdt_send(ta->sd, ta->addr, ta->m);  // Invia il messaggio
         if(gettimeofday(&tv, NULL) == -1){
             print_error(1, "Error getting time");
         }

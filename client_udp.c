@@ -30,7 +30,7 @@ void signal_handler(int signum){
 	if(signum == SIGALRM){
 		printf("\nTime limit exceeded. Disconnecting...\n");	
 	} 
-	quit_conn(sd,server);
+	close_conn(sd,server);
 	close(sd);
 	exit(0);
 }
@@ -82,7 +82,7 @@ retry:
 		if(n <= 0){
 			if(n == EOF){
 				print_error(1,"Error reading input");
-				quit_conn(sd, server);
+				close_conn(sd, server);
 				close(sd);
 				return -1;
 			}
@@ -113,7 +113,7 @@ retry:
 			list_files(sd, server, ca.window, ca.timeout);
 		}
 		else if(strcmp(cmd,"q") == 0){
-			quit_conn(sd, server);	//segnala al server che si intende chiudere la comunicazione
+			close_conn(sd, server);	//segnala al server che si intende chiudere la comunicazione
 			close(sd);
 			break;
 		}
@@ -134,7 +134,7 @@ retry:
 					continue;
 				}				
 
-				file_transfer_debug(ca, sd, server, par, PATH);
+				debug_and_test(ca, sd, server, par, PATH);
 			#else
 				print_error(0,"Command not found");
 			#endif

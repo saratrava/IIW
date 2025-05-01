@@ -1,8 +1,6 @@
-//socket_comm.c
-
 /*
 ================================================================================
-Selective Repeat UDP
+Reliable Comunication
 ================================================================================
 */
 
@@ -67,7 +65,7 @@ void set_timeout(int socket, int sec, long usec) {
  * @param m Struttura che contiene il comando e il messaggio da inviare.
  * @return Ritorna 0 se l’invio va a buon fine, -1 in caso di errore.
  */
-int send_mess(int sd, struct sockaddr_in server, struct message *m) {
+int rdt_send(int sd, struct sockaddr_in server, struct message *m) {
     char *line = malloc(20);
     char *line2 = malloc(MAX);
     char *lineT = malloc(MAX+20);
@@ -111,7 +109,7 @@ int send_mess(int sd, struct sockaddr_in server, struct message *m) {
  * @param usec Numero di microsecondi per il timeout.
  * @return Ritorna 0 se l’operazione ha successo, -1 in caso di fallimento.
  */
-int recv_mess(int sd, struct sockaddr_in *server, socklen_t size, struct message *m, int sec, long usec) {
+int rdt_rcv(int sd, struct sockaddr_in *server, socklen_t size, struct message *m, int sec, long usec) {
     int n;
     char line[MAX+20];
     

@@ -1,10 +1,9 @@
-//file_ops.c
-
 /*
 ================================================================================
-Funzioni LIST - GET - PUT
+LIST - GET - PUT 
 ================================================================================
 */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,7 +48,7 @@ Funzioni LIST - GET - PUT
         window[i] = NULL;
     }
     while(1) {
-        if(recv_mess(sd, &addr, sizeof(addr), m, 5, 0) == -1){
+        if(rdt_rcv(sd, &addr, sizeof(addr), m, 5, 0) == -1){
             print_error(1, "Connection error");
             return -1;
         }
@@ -59,7 +58,7 @@ Funzioni LIST - GET - PUT
             if (strncmp(m->cmd, "put", 3) == 0) {
                 sprintf(m->mess, "ok");
                 sprintf(m->cmd, "put");
-                send_mess(sd, addr, m);
+                rdt_send(sd, addr, m);
             }
             free(m->cmd);
             free(m->mess);
@@ -100,7 +99,7 @@ Funzioni LIST - GET - PUT
             memset(m->mess, 0, MAX);
             sprintf(m->cmd, "ack");
             sprintf(m->mess, "%d", n);
-            send_mess(sd, addr, m); // Invio dell'ack
+            rdt_send(sd, addr, m); // Invio dell'ack
             free(m->cmd);
             free(m->mess);
             m->mess = NULL;
@@ -113,10 +112,10 @@ Funzioni LIST - GET - PUT
                             m->cmd = malloc(20);
                             memset(m->cmd, 0, 20);
                             sprintf(m->cmd, "done=20=%d", timeout);
-                            send_mess(sd, addr, m);
+                            rdt_send(sd, addr, m);
                             free(m->cmd);
                             m->mess = NULL;
-                            if(recv_mess(sd, &addr, sizeof(addr), m, 0, timeout*20) == -1) {
+                            if(rdt_rcv(sd, &addr, sizeof(addr), m, 0, timeout*20) == -1) {
                                 return 0;
                             }
                             if(strncmp(m->cmd, "close", 5) == 0) {
@@ -142,7 +141,7 @@ Funzioni LIST - GET - PUT
             memset(m->mess, 0, MAX);
             sprintf(m->cmd, "ack");
             sprintf(m->mess, "%d", n);
-            send_mess(sd, addr, m);
+            rdt_send(sd, addr, m);
             free(m->cmd);
             free(m->mess);
         }
@@ -273,7 +272,7 @@ redo:
         }
     }
     while(1){
-        if(recv_mess(sd, &addr, sizeof(addr), &rm, 5, 0) == -1){
+        if(rdt_rcv(sd, &addr, sizeof(addr), &rm, 5, 0) == -1){
             for(i = 0; i < N; i++){
                 if(window[i] != 0 && window[i] != 1){
                     pthread_detach(window[i]);
@@ -302,10 +301,10 @@ redo:
                 memset(rm.cmd, 0, 20);
                 sprintf(rm.cmd, "close=20");
                 rm.mess = NULL;
-                send_mess(sd, addr, &rm);
+                rdt_send(sd, addr, &rm);
                 free(rm.cmd);
                 free(rm.mess);
-                if(recv_mess(sd, &addr, sizeof(addr), &rm, 0, 10 * timeout) == -1){
+                if(rdt_rcv(sd, &addr, sizeof(addr), &rm, 0, 10 * timeout) == -1){
                     break;
                 }
                 if(strncmp(rm.cmd, "done", 4) == 0){
@@ -568,7 +567,7 @@ redo:
         }
     }
     while(1){    
-        if(recv_mess(sd, &client, sizeof(client), &rm, 0, 500 * timeout) == -1){
+        if(rdt_rcv(sd, &client, sizeof(client), &rm, 0, 500 * timeout) == -1){
             for(i = 0; i < N; i++){
                 if(window[i] != 0 && window[i] != 1){
                     pthread_detach(window[i]);
@@ -590,9 +589,9 @@ redo:
                 memset(rm.cmd, 0, 20);
                 strcpy(rm.cmd, "close=20");
                 rm.mess = NULL;
-                send_mess(sd, client, &rm);
+                rdt_send(sd, client, &rm);
                 free(rm.cmd);
-                if(recv_mess(sd, &client, sizeof(client), &rm, 0, 5 * timeout) == -1){
+                if(rdt_rcv(sd, &client, sizeof(client), &rm, 0, 5 * timeout) == -1){
                     break;
                 }
                 if(strncmp(rm.cmd, "done", 4) == 0){
@@ -746,7 +745,7 @@ open:
             m.cmd = "err";
             sprintf(line, "Error opening file: File not found");
             m.mess = line;
-            send_mess(sd, client, &m);
+            rdt_send(sd, client, &m);
             return -1;
         }
         goto open;
@@ -758,7 +757,7 @@ open:
         m.cmd = "err";
         sprintf(line, "Error opening file: File initialization failed");
         m.mess = line;
-        send_mess(sd, client, &m);
+        rdt_send(sd, client, &m);
         return -1;
     }
     int dim = ftell(f);
@@ -804,7 +803,7 @@ open:
             else{
                 sprintf(m.mess, "Error opening file: Something went wrong");
             }
-            send_mess(sd, client, &m);
+            rdt_send(sd, client, &m);
             free(m.mess);
             return -1;
         }
@@ -815,7 +814,7 @@ open:
 
     sprintf(m.mess, "ok");
     sprintf(m.cmd, "put");
-    send_mess(sd, client, &m);
+    rdt_send(sd, client, &m);
     
     f = fopen(file, "wb");
     if(download_file(sd, client, f, N) == -1){
@@ -843,9 +842,9 @@ retryList:
     memset(m->cmd, 0, 20);
     sprintf(m->cmd, "list");
     m->mess = NULL;
-    send_mess(sd, server, m);
+    rdt_send(sd, server, m);
     free(m->cmd);
-    if(recv_mess(sd, &server, sizeof(server), m, 0, 5 * timeout) == -1){
+    if(rdt_rcv(sd, &server, sizeof(server), m, 0, 5 * timeout) == -1){
         listRN++;
         goto retryList;
     }
@@ -888,10 +887,10 @@ retryGet:
     sprintf(app, "get");
     m.cmd = app;
     m.mess = file;
-    if(send_mess(sd, server, &m) == -1){
+    if(rdt_send(sd, server, &m) == -1){
         return -1;
     }
-    if(recv_mess(sd, &server, sizeof(server), &m, 0, 5 * timeout) == -1){
+    if(rdt_rcv(sd, &server, sizeof(server), &m, 0, 5 * timeout) == -1){
         getRN++;
         goto retryGet;
     }
@@ -952,8 +951,8 @@ retryPut:
     sprintf(app, "put");
     m.cmd = app;
     m.mess = file;
-    send_mess(sd, server, &m);
-    if(recv_mess(sd, &server, sizeof(server), &m, 0, 5 * timeout) == -1){
+    rdt_send(sd, server, &m);
+    if(rdt_rcv(sd, &server, sizeof(server), &m, 0, 5 * timeout) == -1){
         putRN++;
         goto retryPut;
     }

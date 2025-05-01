@@ -19,5 +19,5 @@
 
 bool prob(double p);
 void set_timeout(int socket, int sec, long usec);
-int send_mess(int sd, struct sockaddr_in server, struct message *m);
-int recv_mess(int sd, struct sockaddr_in *server, socklen_t size, struct message *m, int sec, long usec);
+int rdt_send(int sd, struct sockaddr_in server, struct message *m);
+int rdt_rcv(int sd, struct sockaddr_in *server, socklen_t size, struct message *m, int sec, long usec);

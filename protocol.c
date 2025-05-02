@@ -16,7 +16,7 @@ Timeout and Pipelining
 
 #include "types.h"
 #include "reliable_com.h"
-
+#include "utils.h"
 
 /*
  * @brief Calcola un timeout aggiornato utilizzando i meccanismi di stima RTT e deviazione.

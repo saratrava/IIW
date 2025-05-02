@@ -22,6 +22,7 @@ Reliable Comunication
 #include <sys/socket.h>
 
 #include "types.h"
+#include "utils.h"
 
 
 

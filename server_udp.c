@@ -15,17 +15,9 @@
 #include "types.h"
 #include "utils.h"
 #include "reliable_com.h"
-#include "handshake.h"
+#include "connection.h"
 #include "protocol.h"
 #include "file_ops.h"
-
-//------------------------------------PARAMETRI CONFIGURAZIONE SERVER-----------------------------------------------
-#define PORT 50000		//Porta di default del server
-#define NUMPORT 15000	//Numero massimo di connessioni concorrenti
-#define N 5				//Dimensione finestra
-#define T 10000			//Timeout in microsecondi
-#define ADAP 1			//Flag per il timeout adattivo
-//------------------------------------------------------------------------------------------------------------------
 
 #define MAX 4096
 #define PATH "server_src/files/"
@@ -78,7 +70,7 @@ int main(int argc, char **argv){
 
 		if(strcmp(m.cmd, "conn") == 0){
 
-			ca.window = N;
+			ca.window = W;
 			ca.timeout = T;
 			ca.adapt = ADAP;
 
@@ -119,16 +111,16 @@ int main(int argc, char **argv){
 						printf("[Port:%d] - Command %s\n", ca.port, m.cmd);
 
 						if (strcmp(m.cmd, "list") == 0){
-							if(listFunc(new_sd, new_client, N, T, ADAP, PATH) == -1) printf("[Port:%d] - Error sending list\n", ca.port);
+							if(listFunc(new_sd, new_client, W, T, ADAP, PATH) == -1) printf("[Port:%d] - Error sending list\n", ca.port);
 						}
 						else if (strcmp(m.cmd, "get") == 0){
 							sprintf(line, "%s%s", PATH, m.mess);
-							if(getFunc(new_sd, new_client,line, N, T, ADAP) == -1) printf("[Port:%d] - Error sending file\n", ca.port);
+							if(getFunc(new_sd, new_client,line, W, T, ADAP) == -1) printf("[Port:%d] - Error sending file\n", ca.port);
 							else printf("[Port:%d] - File '%s' successfully sent\n", ca.port, m.mess);
 						}
 						else if (strcmp(m.cmd, "put") == 0){
 							sprintf(line, "%s%s", PATH, m.mess);
-							if(putFunc(new_sd, new_client, line, N) == -1) printf("[Port:%d] - Error receiving file\n", ca.port);
+							if(putFunc(new_sd, new_client, line, W) == -1) printf("[Port:%d] - Error receiving file\n", ca.port);
 							else printf("[Port:%d] - File '%s' successfully received\n", ca.port, m.mess);
 						}
 						else if(strcmp(m.cmd, "quit") == 0){

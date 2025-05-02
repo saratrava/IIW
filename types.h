@@ -1,16 +1,22 @@
-//TYPES.h
-
 #include <stdbool.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#define MAX 4096    // Dimensione della PDU
+#define MAX 4096          // Dimensione della PDU
 #define PROB 0.125       // Probabilità simulata di errore
 
 // ------------------------------------PARAMETRI PER IL TIMEOUT ADATTIVO -------------------------------------------
 #define ALPHA 0.125
 #define BETA 0.25
+//------------------------------------------------------------------------------------------------------------------
+
+//------------------------------------PARAMETRI CONFIGURAZIONE SERVER-----------------------------------------------
+#define PORT 50000		//Porta di default del server
+#define NUMPORT 15000	       //Numero massimo di connessioni concorrenti
+#define W 5		      //Dimensione finestra
+#define T 10000		     //Timeout in microsecondi
+#define ADAP 1		    //Flag per il timeout adattivo
 //------------------------------------------------------------------------------------------------------------------
 
 

@@ -9,7 +9,7 @@
 #include "types.h"
 #include "utils.h"
 #include "reliable_com.h"
-#include "handshake.h"
+#include "connection.h"
 #include "protocol.h"
 #include "file_ops.h"
 #include "debug.h"
@@ -149,21 +149,21 @@ retry:
 
 void say_hello(){
 
-	printf("\033[1m -------------------------------------------------------- \n");
-	printf("| WELCOME                                                |\n");
-	printf("|--------------------------------------------------------|\n");
-	printf("|                                                        |\n");
-	printf("| list              Show the list of files on the server |\n");
-	printf("| get <file_name>   Download a file from the server      |\n");
-	printf("| put <file_name>   Upload a file on the server          |\n");
-	printf("|                                                        |\n");
-	printf("| ls                Lists the files available for upload |\n");
-	printf("| help              Shows this command list              |\n");
+	printf("\033[1m ------------------------------------------------------------\n");
+	printf("| WELCOME                                                    |\n");
+	printf("|------------------------------------------------------------|\n");
+	printf("|                                                            |\n");
+	printf("| list              Show the list of the files on the server |\n");
+	printf("| get <file_name>   Download a file from the server          |\n");
+	printf("| put <file_name>   Upload a file on the server              |\n");
+	printf("|                                                            |\n");
+	printf("| ls                Show the files available for the upload  |\n");
+	printf("| help              Show this command list                   |\n");
 #ifdef debug
-	printf("| test <func_name>  Test the function efficiency         |\n");
+	printf("| test <func_name>  Test the function efficiency             |\n");
 #endif
-	printf("| q                 Quit                                 |\n");
-	printf("|                                                        |\n");
-	printf(" --------------------------------------------------------\033[0m \n\n");
+	printf("| q                 Quit                                     |\n");
+	printf("|                                                            |\n");
+	printf(" ------------------------------------------------------------\033[0m \n\n");
 
 }

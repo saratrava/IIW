@@ -21,6 +21,8 @@ LIST - GET - PUT
 
 #include "types.h"
 #include "protocol.h"
+#include "reliable_com.h"
+#include "utils.h"
 
 /*
  * @brief Riceve un file tramite socket e lo salva sul file system.

@@ -1,5 +1,3 @@
-// file_ops.h
-
 #include <stdio.h>
 
 int download_file(int sd, struct sockaddr_in addr, FILE* fd, int N);

@@ -53,9 +53,9 @@ retry:
     printf("Insert the number of tests: ");  // Richiede il numero di test da effettuare
     n = scanf("%d", &count);
     getchar();
-    if(n <= 0){
+    if((n <= 0) || ((n != 1) && (n != 2) && (n != 3) && (n != 4) && (n != 5) && (n != 6) && (n != 7) && (n != 8) && (n != 9))){
         if(n == EOF){
-            print_error(1, "Error reading input");
+            print_error(1, "Error: you must insert a positive integer");
             fclose(fd);
             return;
         }

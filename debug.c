@@ -22,7 +22,9 @@ File Transfer Debug and Test
 #include <sys/socket.h>
 
 #include "types.h"
-
+#include "utils.h"
+#include "file_ops.h"
+#include "connection.h"
 
 /*
  * @brief Funzione di debug usata dal client per testare i comandi list, get e put.
@@ -48,7 +50,7 @@ void debug_and_test(conn_arg args, int sd, struct sockaddr_in server, char *func
         return;
     }
 retry:
-    printf("Insert a number : ");  // Richiede il numero di test da effettuare
+    printf("Insert the number of tests: ");  // Richiede il numero di test da effettuare
     n = scanf("%d", &count);
     getchar();
     if(n <= 0){
@@ -101,7 +103,7 @@ retry1:
             }
             goto retry1;
         }
-        printf("\nWindow: %d\nError probability: %lf\nTimeout: %d\nAdaptive: %d\nPdu size: %d\nRepetitions: %d\n",
+        printf("\nWindow: %d\nError probability: %lf\nTimeout: %d\nAdaptive: %d\nPDU size: %d\nRepetitions: %d\n",
                args.window, PROB, args.timeout, args.adapt, MAX, count);
         printf("\n--- Starting system debug ---\n");
         fprintf(fd, "Num,Command,Tot_time");

@@ -19,7 +19,6 @@
 #include "protocol.h"
 #include "file_ops.h"
 
-#define MAX 4096
 #define PATH "server_src/files/"
 
 int main(int argc, char **argv){

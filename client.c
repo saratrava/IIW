@@ -16,7 +16,6 @@
 
 //---------------------------------------------------------------------------------------------------------------
 #define IP "127.0.0.1"			//Ip server
-#define DEFAULT 50000			//Porta di default del server
 #define PATH "client_src/files/"	//Path della cartella dove si vogliono salvare i file
 //---------------------------------------------------------------------------------------------------------------
 
@@ -58,7 +57,7 @@ int main(int argc, char *argv[]){
 		return -1;
 	}
 
-	if(connect_client(DEFAULT, IP, &ca) == -1){	//Contatta il server per ricevere i parametri di connessione
+	if(connect_client(PORT, IP, &ca) == -1){	//Contatta il server per ricevere i parametri di connessione
 		close(sd);
 		return -1;
 	}

@@ -455,7 +455,7 @@ redo2:
  * @param path Percorso della directory contenente i file.
  * @return Ritorna 0 se la lista viene inviata correttamente, -1 in caso di problemi.
  */
-int list_rcv(int sd, struct sockaddr_in client, int N, int start_timeout, int adapt, char *path) {
+int list_sender(int sd, struct sockaddr_in client, int N, int start_timeout, int adapt, char *path) {
     DIR *d;
     struct dirent *dir;
     pthread_t window[N];

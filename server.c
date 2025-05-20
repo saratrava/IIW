@@ -110,7 +110,7 @@ int main(int argc, char **argv){
 						printf("[Port:%d] - Command %s\n", ca.port, m.cmd);
 
 						if (strcmp(m.cmd, "list") == 0){
-							if(listFunc(new_sd, new_client, W, T, ADAP, PATH) == -1) printf("[Port:%d] - Error sending list\n", ca.port);
+							if(list_rcv(new_sd, new_client, W, T, ADAP, PATH) == -1) printf("[Port:%d] - Error sending list\n", ca.port);
 						}
 						else if (strcmp(m.cmd, "get") == 0){
 							sprintf(line, "%s%s", PATH, m.mess);

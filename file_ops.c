@@ -32,7 +32,7 @@ LIST - GET - PUT
  * @param N Dimensione della finestra di ricezione.
  * @return Ritorna 0 se il trasferimento del file ha successo, -1 in caso di errore.
  */
- int download_file(int sd, struct sockaddr_in addr, FILE* fd, int N) {
+ int download_rcv(int sd, struct sockaddr_in addr, FILE* fd, int N) {
     char *window[N];
     int dim[N];
     char line[MAX];
@@ -161,7 +161,7 @@ LIST - GET - PUT
  * @param dim Dimensione totale del file da trasferire.
  * @return Ritorna 0 se il file viene inviato correttamente, -1 in caso di errori.
  */
-int upload_file(int sd, struct sockaddr_in addr, FILE* fd, int N, int start_timeout, int adapt, int dim) {
+int upload_sender(int sd, struct sockaddr_in addr, FILE* fd, int N, int start_timeout, int adapt, int dim) {
     pthread_t window[N];
     long time[N];
     int send_base, next_seq, i, n, end_num, res;
@@ -455,7 +455,7 @@ redo2:
  * @param path Percorso della directory contenente i file.
  * @return Ritorna 0 se la lista viene inviata correttamente, -1 in caso di problemi.
  */
-int listFunc(int sd, struct sockaddr_in client, int N, int start_timeout, int adapt, char *path) {
+int list_rcv(int sd, struct sockaddr_in client, int N, int start_timeout, int adapt, char *path) {
     DIR *d;
     struct dirent *dir;
     pthread_t window[N];
@@ -765,7 +765,7 @@ open:
     int dim = ftell(f);
     fclose(f);
     f = fopen(file, "rb");
-    if(upload_file(sd, client, f, N, timeout, adapt, dim) == -1){
+    if(upload_sender(sd, client, f, N, timeout, adapt, dim) == -1){
         fclose(f);
         return -1;
     }
@@ -819,7 +819,7 @@ open:
     rdt_send(sd, client, &m);
     
     f = fopen(file, "wb");
-    if(download_file(sd, client, f, N) == -1){
+    if(download_rcv(sd, client, f, N) == -1){
         fclose(f);
         return -1;
     }
@@ -852,7 +852,7 @@ retryList:
     }
     free(m->cmd);
     printf("\n\033[1m----- Server File list -----\033[0m\n\n");
-    if(download_file(sd, server, stdout, N) != -1){
+    if(download_rcv(sd, server, stdout, N) != -1){
         printf("\n\033[1m----------------------------\033[0m\n\n");
         free(m);
         return 0;
@@ -906,7 +906,7 @@ retryGet:
     }
     free(m.cmd);
     free(m.mess);
-    if(download_file(sd, server, f, N) != -1){
+    if(download_rcv(sd, server, f, N) != -1){
         sprintf(line, "Download of file '%s' complete", file);
         print_success(line);
         memset(&line, 0, MAX);
@@ -968,7 +968,7 @@ retryPut:
     f = fopen(path, "rb");
     free(m.cmd);
     free(m.mess);
-    if(upload_file(sd, server, f, N, timeout, adapt, dim) != -1){
+    if(upload_sender(sd, server, f, N, timeout, adapt, dim) != -1){
         print_success("File successfully uploaded to the server!");
         fflush(stdout);
         fclose(f);

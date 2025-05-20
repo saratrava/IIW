@@ -11,7 +11,7 @@
 #define BETA 0.25
 //------------------------------------------------------------------------------------------------------------------
 
-//------------------------------------PARAMETRI CONFIGURAZIONE SERVER-----------------------------------------------
+//------------------------------------PARAMETRI CONFIGURAZIONE CONNESSIONE------------------------------------------
 #define PORT 50000		//Porta di default del server
 #define NUMPORT 15000	       //Numero massimo di connessioni concorrenti
 #define W 5		      //Dimensione finestra
